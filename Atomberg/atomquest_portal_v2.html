@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AtomQuest — Goal Setting & Tracking Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --black:#0a0a0a;
+  --black2:#111111;
+  --black3:#1a1a1a;
+  --black4:#222222;
+  --black5:#2d2d2d;
+  --yellow:#f5c518;
+  --yellow2:#e6b800;
+  --yellow3:#ffd740;
+  --yellow-dim:rgba(245,197,24,0.12);
+  --yellow-dim2:rgba(245,197,24,0.06);
+  --white:#f0f0f0;
+  --grey:#888;
+  --grey2:#555;
+  --red:#e53935;
+  --green:#4caf50;
+  --font-display:'Bebas Neue',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --radius:6px;
+  --shadow:0 4px 24px rgba(0,0,0,0.6);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--black);color:var(--white);font-family:var(--font-body);font-size:14px;min-height:100vh;overflow-x:hidden;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:var(--black2);}
+::-webkit-scrollbar-thumb{background:var(--yellow2);border-radius:3px;}
+
+/* UTILITY */
+.hidden{display:none!important;}
+.flex{display:flex;}
+.items-center{align-items:center;}
+.gap-1{gap:4px;}
+.gap-2{gap:8px;}
+.gap-3{gap:12px;}
+.yellow{color:var(--yellow);}
+.red{color:var(--red);}
+.green{color:var(--green);}
+.grey{color:var(--grey);}
+.mono{font-family:var(--font-mono);}
+.w-full{width:100%;}
+.mb-1{margin-bottom:4px;}
+.mb-2{margin-bottom:8px;}
+.mb-3{margin-bottom:12px;}
+.mb-4{margin-bottom:16px;}
+.mt-2{margin-top:8px;}
+.mt-3{margin-top:12px;}
+.mt-4{margin-top:16px;}
+.text-sm{font-size:12px;}
+.text-lg{font-size:16px;}
+.text-xl{font-size:20px;}
+.font-bold{font-weight:700;}
+.italic{font-style:italic;}
+
+/* TOAST */
+#toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.toast{background:var(--black3);border-left:3px solid var(--yellow);padding:12px 16px;border-radius:var(--radius);font-size:13px;color:var(--white);animation:slideIn .3s ease;box-shadow:var(--shadow);pointer-events:auto;max-width:320px;}
+.toast.error{border-color:var(--red);}
+.toast.success{border-color:var(--green);}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
+@keyframes fadeOut{from{opacity:1;}to{opacity:0;}}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;background:var(--black);z-index:1000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:32px;}
+.login-logo{font-family:var(--font-display);font-size:72px;color:var(--yellow);letter-spacing:4px;text-align:center;line-height:1;}
+.login-logo span{color:var(--white);}
+.login-sub{font-size:13px;color:var(--grey);text-align:center;letter-spacing:2px;text-transform:uppercase;}
+.login-card{background:var(--black3);border:1px solid var(--black5);border-radius:8px;padding:32px;width:380px;box-shadow:var(--shadow);}
+.login-card h2{font-family:var(--font-display);font-size:28px;color:var(--yellow);margin-bottom:24px;letter-spacing:1px;}
+.role-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px;}
+.role-btn{background:var(--black4);border:1px solid var(--black5);color:var(--grey);padding:10px 6px;border-radius:var(--radius);cursor:pointer;font-size:12px;text-align:center;transition:all .2s;font-family:var(--font-body);}
+.role-btn:hover,.role-btn.active{background:var(--yellow-dim);border-color:var(--yellow);color:var(--yellow);}
+.input-group{margin-bottom:16px;}
+.input-group label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--grey);margin-bottom:6px;}
+.input-group input,.input-group select,.input-group textarea{width:100%;background:var(--black2);border:1px solid var(--black5);color:var(--white);padding:10px 12px;border-radius:var(--radius);font-family:var(--font-body);font-size:13px;transition:border .2s;outline:none;}
+.input-group input:focus,.input-group select:focus,.input-group textarea:focus{border-color:var(--yellow);}
+.input-group select option{background:var(--black2);}
+.input-group textarea{resize:vertical;min-height:80px;}
+.btn{padding:10px 20px;border-radius:var(--radius);border:none;cursor:pointer;font-family:var(--font-body);font-weight:600;font-size:13px;transition:all .2s;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:var(--yellow);color:var(--black);} .btn-primary:hover{background:var(--yellow3);}
+.btn-ghost{background:transparent;color:var(--yellow);border:1px solid var(--yellow);} .btn-ghost:hover{background:var(--yellow-dim);}
+.btn-danger{background:transparent;color:var(--red);border:1px solid var(--red);} .btn-danger:hover{background:rgba(229,57,53,.1);}
+.btn-sm{padding:6px 12px;font-size:12px;}
+.btn-xs{padding:4px 8px;font-size:11px;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.sso-btn{background:var(--black4);border:1px solid var(--black5);color:var(--white);padding:10px;border-radius:var(--radius);cursor:pointer;font-size:12px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;font-family:var(--font-body);margin-bottom:16px;}
+.sso-btn:hover{border-color:var(--yellow);color:var(--yellow);}
+.divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--grey2);font-size:11px;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--black5);}
+
+/* APP LAYOUT */
+#app{display:flex;min-height:100vh;}
+#sidebar{width:220px;min-width:220px;background:var(--black2);border-right:1px solid var(--black5);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;}
+.sidebar-logo{padding:20px;border-bottom:1px solid var(--black5);}
+.sidebar-logo .name{font-family:var(--font-display);font-size:28px;color:var(--yellow);letter-spacing:2px;}
+.sidebar-logo .version{font-size:10px;color:var(--grey);letter-spacing:1px;text-transform:uppercase;}
+.sidebar-user{padding:16px;border-bottom:1px solid var(--black5);}
+.user-avatar{width:36px;height:36px;background:var(--yellow);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:16px;color:var(--black);flex-shrink:0;}
+.user-info{flex:1;min-width:0;}
+.user-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.user-role{font-size:10px;color:var(--yellow);text-transform:uppercase;letter-spacing:1px;}
+.nav-section{padding:16px 0;}
+.nav-label{padding:4px 16px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--grey2);}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;color:var(--grey);font-size:13px;transition:all .2s;border-left:3px solid transparent;position:relative;}
+.nav-item:hover{color:var(--white);background:var(--yellow-dim2);}
+.nav-item.active{color:var(--yellow);background:var(--yellow-dim);border-left-color:var(--yellow);}
+.nav-item svg{flex-shrink:0;opacity:.7;}
+.nav-item.active svg{opacity:1;}
+.nav-badge{position:absolute;right:12px;background:var(--yellow);color:var(--black);font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;}
+.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid var(--black5);}
+.cycle-info{background:var(--yellow-dim2);border:1px solid var(--black5);border-radius:var(--radius);padding:10px;margin-bottom:12px;}
+.cycle-info .label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--grey);margin-bottom:4px;}
+.cycle-info .value{font-size:12px;color:var(--yellow);font-weight:600;}
+#main{flex:1;margin-left:220px;min-height:100vh;}
+#topbar{background:var(--black2);border-bottom:1px solid var(--black5);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.page-title{font-family:var(--font-display);font-size:22px;color:var(--white);letter-spacing:1px;}
+.topbar-actions{display:flex;align-items:center;gap:12px;}
+.notif-btn{background:var(--black4);border:1px solid var(--black5);color:var(--grey);padding:7px;border-radius:var(--radius);cursor:pointer;position:relative;display:flex;align-items:center;transition:all .2s;}
+.notif-btn:hover{color:var(--yellow);border-color:var(--yellow);}
+.notif-dot{position:absolute;top:4px;right:4px;width:7px;height:7px;background:var(--yellow);border-radius:50%;}
+#content{padding:28px;}
+
+/* CARDS & TABLES */
+.card{background:var(--black2);border:1px solid var(--black5);border-radius:8px;padding:20px;margin-bottom:16px;}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.card-title{font-family:var(--font-display);font-size:18px;color:var(--white);letter-spacing:1px;}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.stat-card{background:var(--black3);border:1px solid var(--black5);border-radius:8px;padding:16px;position:relative;overflow:hidden;}
+.stat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--yellow);}
+.stat-value{font-family:var(--font-display);font-size:40px;color:var(--yellow);line-height:1;}
+.stat-label{font-size:11px;color:var(--grey);text-transform:uppercase;letter-spacing:1px;margin-top:4px;}
+.stat-trend{font-size:11px;color:var(--green);margin-top:2px;}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead tr{border-bottom:1px solid var(--black5);}
+thead th{text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--grey);font-weight:600;}
+tbody tr{border-bottom:1px solid var(--black4);transition:background .15s;}
+tbody tr:hover{background:var(--yellow-dim2);}
+tbody td{padding:10px 12px;font-size:13px;}
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.badge-yellow{background:var(--yellow-dim);color:var(--yellow);}
+.badge-green{background:rgba(76,175,80,.12);color:var(--green);}
+.badge-red{background:rgba(229,57,53,.12);color:var(--red);}
+.badge-grey{background:var(--black4);color:var(--grey);}
+.badge-blue{background:rgba(33,150,243,.12);color:#2196f3;}
+.progress-bar{background:var(--black4);border-radius:3px;height:6px;overflow:hidden;}
+.progress-fill{background:var(--yellow);height:100%;transition:width .5s ease;border-radius:3px;}
+.progress-fill.danger{background:var(--red);}
+.progress-fill.success{background:var(--green);}
+
+/* FORMS */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.col-span-2{grid-column:span 2;}
+.form-row{display:flex;gap:12px;align-items:flex-end;}
+.section-divider{border:none;border-top:1px solid var(--black5);margin:20px 0;}
+
+/* GOAL CARD */
+.goal-item{background:var(--black3);border:1px solid var(--black5);border-radius:6px;padding:16px;margin-bottom:12px;position:relative;}
+.goal-item:hover{border-color:var(--black4);}
+.goal-item .goal-num{font-family:var(--font-display);font-size:32px;color:var(--yellow);opacity:.3;position:absolute;top:10px;right:16px;line-height:1;}
+.goal-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.weightage-bar{margin-top:12px;}
+.weightage-label{font-size:11px;color:var(--grey);margin-bottom:4px;display:flex;justify-content:space-between;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal{background:var(--black2);border:1px solid var(--black5);border-radius:10px;width:100%;max-width:640px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.8);}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--black5);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-title{font-family:var(--font-display);font-size:22px;color:var(--yellow);letter-spacing:1px;}
+.modal-close{background:none;border:none;color:var(--grey);cursor:pointer;font-size:20px;padding:4px;transition:color .2s;}
+.modal-close:hover{color:var(--white);}
+.modal-body{padding:24px;overflow-y:auto;flex:1;}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--black5);display:flex;justify-content:flex-end;gap:10px;flex-shrink:0;}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--black5);margin-bottom:20px;gap:2px;}
+.tab{padding:10px 20px;cursor:pointer;font-size:13px;color:var(--grey);border-bottom:2px solid transparent;transition:all .2s;}
+.tab:hover{color:var(--white);}
+.tab.active{color:var(--yellow);border-bottom-color:var(--yellow);}
+
+/* CHARTS */
+.chart-container{position:relative;height:200px;}
+.bar-chart{display:flex;align-items:flex-end;gap:4px;height:160px;padding:0 8px;}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.bar{background:var(--yellow);border-radius:3px 3px 0 0;width:100%;transition:height .5s ease;position:relative;min-height:2px;}
+.bar:hover{background:var(--yellow3);}
+.bar-label{font-size:10px;color:var(--grey);text-align:center;white-space:nowrap;}
+.bar-val{font-size:10px;color:var(--yellow);font-weight:700;}
+.heatmap{display:grid;gap:3px;}
+.heatmap-cell{border-radius:3px;aspect-ratio:1;transition:all .2s;cursor:default;}
+.donut-svg{display:block;margin:auto;}
+
+/* NOTIF PANEL */
+#notif-panel{position:fixed;top:56px;right:0;width:320px;background:var(--black2);border-left:1px solid var(--black5);border-bottom:1px solid var(--black5);z-index:200;padding:16px;max-height:60vh;overflow-y:auto;box-shadow:var(--shadow);}
+.notif-item{padding:12px;border-bottom:1px solid var(--black5);display:flex;gap:10px;cursor:pointer;transition:background .15s;}
+.notif-item:hover{background:var(--yellow-dim2);}
+.notif-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;}
+.notif-content .title{font-size:12px;font-weight:600;margin-bottom:2px;}
+.notif-content .body{font-size:11px;color:var(--grey);}
+.notif-content .time{font-size:10px;color:var(--grey2);margin-top:2px;}
+
+/* AUDIT LOG */
+.audit-entry{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--black4);}
+.audit-dot{width:8px;height:8px;border-radius:50%;background:var(--yellow);flex-shrink:0;margin-top:4px;}
+.audit-line{font-size:12px;color:var(--grey);}
+.audit-line strong{color:var(--white);}
+.audit-time{font-size:10px;color:var(--grey2);margin-top:2px;font-family:var(--font-mono);}
+
+/* ESCALATION */
+.escalation-rule{background:var(--black3);border:1px solid var(--black5);border-radius:var(--radius);padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;}
+.esc-icon{width:36px;height:36px;border-radius:50%;background:var(--yellow-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+/* TEAMS ADAPTIVE CARD */
+.teams-card{background:#201f1f;border-radius:6px;overflow:hidden;border:1px solid #444;}
+.teams-header{background:#464775;padding:12px 16px;display:flex;align-items:center;gap:10px;}
+.teams-body{padding:16px;}
+.teams-fact{display:flex;gap:12px;margin-bottom:8px;font-size:12px;}
+.teams-fact .key{color:#aaa;min-width:100px;}
+.teams-fact .val{color:#fff;}
+
+/* PAGE SECTIONS */
+.page{display:none;}
+.page.active{display:block;}
+
+/* WEIGHTAGE METER */
+.wgt-meter{background:var(--black4);border-radius:4px;height:10px;overflow:hidden;margin:8px 0;}
+.wgt-fill{height:100%;transition:width .4s;border-radius:4px;}
+.wgt-100{background:var(--green);}
+.wgt-over{background:var(--red);}
+.wgt-under{background:var(--yellow);}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:48px 20px;color:var(--grey);}
+.empty-state .icon{font-size:48px;margin-bottom:12px;opacity:.4;}
+.empty-state .text{font-size:14px;}
+
+/* SCHEDULE TABLE */
+.schedule-table tbody tr:nth-child(odd){background:var(--black3);}
+
+/* RESPONSIVE TWEAKS */
+@media(max-width:900px){
+  .stat-grid{grid-template-columns:1fr 1fr;}
+  .form-grid{grid-template-columns:1fr;}
+  .col-span-2{grid-column:span 1;}
+}
+
+/* ANIMATION */
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+.pulse{animation:pulse 2s infinite;}
+
+/* SHARED GOAL INDICATOR */
+.shared-badge{background:rgba(33,150,243,.15);border:1px solid rgba(33,150,243,.3);color:#2196f3;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;}
+
+/* CHECK-IN WINDOW */
+.checkin-window{background:var(--yellow-dim);border:1px solid rgba(245,197,24,.3);border-radius:6px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.checkin-window .icon{font-size:20px;}
+.checkin-window .text{font-size:13px;color:var(--yellow);font-weight:500;}
+
+/* QOQ TREND */
+.trend-up{color:var(--green);}
+.trend-down{color:var(--red);}
+.trend-flat{color:var(--grey);}
+
+/* WATERMARK / GRILL */
+.brand-mark{position:fixed;bottom:20px;right:20px;font-family:var(--font-display);font-size:13px;color:var(--grey2);letter-spacing:2px;opacity:.4;pointer-events:none;z-index:10;}
+</style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+<div class="brand-mark">ATOMQUEST 1.0</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div>
+    <div class="login-logo">ATOM<span>QUEST</span></div>
+    <div class="login-sub">Goal Setting & Tracking Portal · Hackathon 1.0</div>
+  </div>
+  <div class="login-card">
+    <h2>Sign In</h2>
+    <button class="sso-btn" onclick="ssoLogin()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zM24 11.4H12.6V0H24v11.4z"/></svg>
+      Continue with Microsoft Entra ID (SSO)
+    </button>
+    <div class="divider">or sign in with demo credentials</div>
+    <div class="role-btns">
+      <button class="role-btn active" onclick="selectRole('employee',this)">👤 Employee</button>
+      <button class="role-btn" onclick="selectRole('manager',this)">👔 Manager</button>
+      <button class="role-btn" onclick="selectRole('admin',this)">🛡️ Admin</button>
+    </div>
+    <div class="input-group">
+      <label>Email</label>
+      <input id="login-email" type="email" value="alice@company.com"/>
+    </div>
+    <div class="input-group">
+      <label>Password</label>
+      <input id="login-pass" type="password" value="demo1234"/>
+    </div>
+    <button class="btn btn-primary w-full" style="justify-content:center" onclick="doLogin()">Sign In →</button>
+    <p class="mt-3 text-sm grey" style="text-align:center">Demo: Employee / Manager / Admin — password: demo1234</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div class="sidebar-logo">
+      <div class="name">ATOMQUEST</div>
+      <div class="version">Goal Portal v1.0</div>
+    </div>
+    <div class="sidebar-user flex items-center gap-2">
+      <div class="user-avatar" id="user-avatar">A</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name">Alice Sharma</div>
+        <div class="user-role" id="user-role-badge">Employee</div>
+      </div>
+    </div>
+    <div class="nav-section" id="nav-items"></div>
+    <div class="sidebar-footer">
+      <div class="cycle-info">
+        <div class="label">Active Cycle</div>
+        <div class="value" id="cycle-label">Q2 Check-in · Oct 2025</div>
+      </div>
+      <button class="btn btn-ghost w-full" style="justify-content:center" onclick="logout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div id="topbar">
+      <div class="page-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-actions">
+        <div style="font-size:11px;color:var(--grey);font-family:var(--font-mono);" id="topbar-date"></div>
+        <div class="notif-btn" onclick="toggleNotif()" id="notif-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <div class="notif-dot" id="notif-dot"></div>
+        </div>
+      </div>
+    </div>
+    <div id="notif-panel" class="hidden"></div>
+    <div id="content">
+      <!-- Pages injected here -->
+      <div id="page-dashboard" class="page"></div>
+      <div id="page-goals" class="page"></div>
+      <div id="page-checkin" class="page"></div>
+      <div id="page-team" class="page"></div>
+      <div id="page-reports" class="page"></div>
+      <div id="page-analytics" class="page"></div>
+      <div id="page-admin" class="page"></div>
+      <div id="page-escalation" class="page"></div>
+      <div id="page-audit" class="page"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Modal</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<script>
+/* ===========================
+   STATE & SEED DATA
+   =========================== */
+const USERS = {
+  employee:{name:'Alice Sharma',email:'alice@company.com',role:'employee',dept:'Sales',manager:'Bob Kumar',avatar:'A'},
+  manager:{name:'Bob Kumar',email:'bob@company.com',role:'manager',dept:'Sales',avatar:'B'},
+  admin:{name:'Carol Singh',email:'carol@company.com',role:'admin',dept:'HR',avatar:'C'}
+};
+const DEMO_PASS = 'demo1234';
+const THRUST_AREAS = ['Revenue Growth','Customer Success','Operational Excellence','Product Innovation','People & Culture','Cost Reduction','Digital Transformation','Safety & Compliance'];
+const UOM_TYPES = ['Numeric (Min)','Numeric (Max)','Percentage (Min)','Percentage (Max)','Timeline','Zero'];
+const QUARTERS = ['Q1 (Jul)','Q2 (Oct)','Q3 (Jan)','Q4/Annual (Mar-Apr)'];
+const CYCLE_WINDOWS = [
+  {period:'Goal Setting',opens:'1st May',action:'Goal Creation, Submission & Approval'},
+  {period:'Q1 Check-in',opens:'July',action:'Progress Update — Planned vs. Actual'},
+  {period:'Q2 Check-in',opens:'October',action:'Progress Update — Planned vs. Actual'},
+  {period:'Q3 Check-in',opens:'January',action:'Progress Update — Planned vs. Actual'},
+  {period:'Q4 / Annual',opens:'March / April',action:'Final Achievement Capture'},
+];
+
+let state = {
+  user:null,
+  currentPage:'dashboard',
+  notifOpen:false,
+  goals:[
+    {id:1,owner:'employee',title:'Increase Sales Revenue',thrust:'Revenue Growth',desc:'Achieve INR 50L revenue this year',uom:'Numeric (Min)',target:5000000,achievement:{Q1:1100000,Q2:2400000,Q3:null,Q4:null},weightage:30,status:{Q1:'On Track',Q2:'On Track',Q3:'Not Started',Q4:'Not Started'},locked:true,shared:false,checkinComments:{}},
+    {id:2,owner:'employee',title:'Customer Retention Rate',thrust:'Customer Success',desc:'Maintain >90% retention',uom:'Percentage (Min)',target:90,achievement:{Q1:88,Q2:92,Q3:null,Q4:null},weightage:25,status:{Q1:'On Track',Q2:'Completed',Q3:'Not Started',Q4:'Not Started'},locked:true,shared:true,checkinComments:{}},
+    {id:3,owner:'employee',title:'Reduce TAT for Proposals',thrust:'Operational Excellence',desc:'Get proposal turnaround under 2 days',uom:'Numeric (Max)',target:2,achievement:{Q1:2.5,Q2:1.8,Q3:null,Q4:null},weightage:20,status:{Q1:'On Track',Q2:'Completed',Q3:'Not Started',Q4:'Not Started'},locked:true,shared:false,checkinComments:{}},
+    {id:4,owner:'employee',title:'Safety Incidents',thrust:'Safety & Compliance',desc:'Zero safety incidents',uom:'Zero',target:0,achievement:{Q1:0,Q2:0,Q3:null,Q4:null},weightage:15,status:{Q1:'Completed',Q2:'Completed',Q3:'Not Started',Q4:'Not Started'},locked:true,shared:false,checkinComments:{}},
+    {id:5,owner:'employee',title:'Product Launch Timeline',thrust:'Product Innovation',desc:'Launch new product by Q4',uom:'Timeline',target:'2025-12-31',achievement:{Q1:'2025-06-30',Q2:null,Q3:null,Q4:null},weightage:10,status:{Q1:'On Track',Q2:'Not Started',Q3:'Not Started',Q4:'Not Started'},locked:true,shared:false,checkinComments:{}}
+  ],
+  pendingGoals:[
+    {id:10,owner:'employee',title:'New Market Expansion',thrust:'Revenue Growth',desc:'Enter 2 new markets',uom:'Numeric (Min)',target:2,weightage:20,status:'Pending Approval',locked:false,shared:false,achievement:{Q1:null,Q2:null,Q3:null,Q4:null},checkinComments:{}}
+  ],
+  teamMembers:[
+    {id:'emp1',name:'Alice Sharma',dept:'Sales',goalsSubmitted:5,goalsApproved:5,q1Done:true,q2Done:true,q3Done:false,avgScore:87},
+    {id:'emp2',name:'David Roy',dept:'Sales',goalsSubmitted:4,goalsApproved:4,q1Done:true,q2Done:false,q3Done:false,avgScore:72},
+    {id:'emp3',name:'Eva Nair',dept:'Sales',goalsSubmitted:6,goalsApproved:5,q1Done:true,q2Done:true,q3Done:false,avgScore:91},
+    {id:'emp4',name:'Faisal Khan',dept:'Sales',goalsSubmitted:3,goalsApproved:0,q1Done:false,q2Done:false,q3Done:false,avgScore:0}
+  ],
+  notifications:[
+    {id:1,type:'approval',title:'Goals Approved',body:'Your Q2 goals have been approved by Bob Kumar',time:'2h ago',read:false,icon:'✅'},
+    {id:2,type:'checkin',title:'Q3 Check-in Open',body:'Q3 achievement window is now open. Submit your actuals.',time:'1d ago',read:false,icon:'📋'},
+    {id:3,type:'teams',title:'Teams Reminder',body:'Manager Bob Kumar has reviewed your Q2 progress',time:'3d ago',read:true,icon:'💬'},
+    {id:4,type:'escalation',title:'Escalation Alert',body:'Faisal Khan has not submitted goals (Day 8)',time:'4d ago',read:true,icon:'⚠️'},
+  ],
+  auditLog:[
+    {id:1,user:'Bob Kumar (Manager)',action:'Approved goal sheet',goal:'Alice Sharma — FY2025',when:'2025-05-03 09:14',after:'Goals locked'},
+    {id:2,user:'Carol Singh (Admin)',action:'Unlocked goal #2',goal:'Customer Retention Rate',when:'2025-06-12 14:22',after:'Goal editable for 24h'},
+    {id:3,user:'Alice Sharma (Employee)',action:'Updated Q2 achievement',goal:'Customer Retention Rate',when:'2025-10-03 10:05',after:'Achievement=92%'},
+    {id:4,user:'Bob Kumar (Manager)',action:'Added check-in comment',goal:'Sales Revenue',when:'2025-10-04 11:30',after:'Comment logged for Q2'},
+    {id:5,user:'System',action:'Escalation triggered',goal:'Faisal Khan — goal submission',when:'2025-05-09 08:00',after:'Email sent to Faisal + Bob'},
+  ],
+  escalationRules:[
+    {id:1,trigger:'Goal not submitted',days:5,chain:'Employee → Manager → HR',active:true},
+    {id:2,trigger:'Goals not approved by manager',days:7,chain:'Manager → Skip-level → HR',active:true},
+    {id:3,trigger:'Check-in not completed',days:10,chain:'Employee → Manager → HR',active:true},
+  ],
+  escalationLog:[
+    {id:1,employee:'Faisal Khan',rule:'Goal not submitted',daysPassed:8,status:'Notified Employee',time:'2025-05-09'},
+  ],
+  cycle:{current:'Q2 Check-in',open:true,openDate:'October 2025'},
+  activeCheckinQuarter:'Q2',
+  checkinWindowDates:{
+    'Q1':{opens:'2025-07-01',closes:'2025-07-31'},
+    'Q2':{opens:'2025-10-01',closes:'2025-10-31'},
+    'Q3':{opens:'2026-01-01',closes:'2026-01-31'},
+    'Q4':{opens:'2026-03-01',closes:'2026-04-30'}
+  },
+  adminConfig:{maxGoals:8,minWeightage:10,cycleYear:2025}
+};
+
+/* ===========================
+   PERSISTENCE (localStorage)
+   =========================== */
+const STORAGE_KEY='atomquest_state_v1';
+function saveState(){
+  try{
+    const s={goals:state.goals,pendingGoals:state.pendingGoals,teamMembers:state.teamMembers,
+             notifications:state.notifications,auditLog:state.auditLog,escalationRules:state.escalationRules,
+             escalationLog:state.escalationLog,cycle:state.cycle,activeCheckinQuarter:state.activeCheckinQuarter,
+             checkinWindowDates:state.checkinWindowDates,adminConfig:state.adminConfig};
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(s));
+    const badge=document.getElementById('persist-badge');
+    if(badge){badge.style.opacity='1';setTimeout(()=>badge.style.opacity='0',2000);}
+  }catch(e){}
+}
+function loadState(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw)return;
+    const saved=JSON.parse(raw);
+    Object.assign(state,saved);
+  }catch(e){}
+}
+// Auto-save on every state mutation: wrap toast to trigger save
+const _origToast=window.toast;
+function persistingToast(msg,type='info'){
+  saveState();
+  // toast will be defined below, called by name
+}
+// Patch: call saveState after every action (we'll call saveState() inline in key functions)
+
+/* ===========================
+   AUTH
+   =========================== */
+loadState();
+let selectedRole='employee';
+function selectRole(role,btn){
+  selectedRole=role;
+  document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const emails={employee:'alice@company.com',manager:'bob@company.com',admin:'carol@company.com'};
+  document.getElementById('login-email').value=emails[role];
+}
+function ssoLogin(){
+  toast('Connecting to Microsoft Entra ID...','info');
+  setTimeout(()=>{
+    toast('SSO Authenticated via Azure AD ✓','success');
+    loginAs(selectedRole);
+  },1200);
+}
+function doLogin(){
+  const pass=document.getElementById('login-pass').value;
+  if(pass!==DEMO_PASS){toast('Invalid credentials','error');return;}
+  loginAs(selectedRole);
+}
+function loginAs(role){
+  state.user=USERS[role];
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  initApp();
+}
+function logout(){
+  state.user=null;
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+}
+
+/* ===========================
+   APP INIT
+   =========================== */
+function initApp(){
+  const u=state.user;
+  document.getElementById('user-name').textContent=u.name;
+  document.getElementById('user-role-badge').textContent=u.role.charAt(0).toUpperCase()+u.role.slice(1);
+  document.getElementById('user-avatar').textContent=u.avatar;
+  document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
+  document.getElementById('cycle-label').textContent=state.cycle.current+' · '+state.cycle.openDate;
+  buildNav();
+  buildNotifications();
+  navigate('dashboard');
+}
+
+const NAV_CONFIG={
+  employee:[
+    {id:'dashboard',icon:dashIcon(),label:'Dashboard'},
+    {id:'goals',icon:targetIcon(),label:'My Goals'},
+    {id:'checkin',icon:checkIcon(),label:'Check-ins'},
+    {id:'analytics',icon:chartIcon(),label:'Analytics'},
+  ],
+  manager:[
+    {id:'dashboard',icon:dashIcon(),label:'Dashboard'},
+    {id:'team',icon:teamIcon(),label:'Team Goals'},
+    {id:'checkin',icon:checkIcon(),label:'Check-ins'},
+    {id:'reports',icon:reportIcon(),label:'Reports'},
+    {id:'analytics',icon:chartIcon(),label:'Analytics'},
+  ],
+  admin:[
+    {id:'dashboard',icon:dashIcon(),label:'Dashboard'},
+    {id:'reports',icon:reportIcon(),label:'Reports'},
+    {id:'analytics',icon:chartIcon(),label:'Analytics'},
+    {id:'escalation',icon:escIcon(),label:'Escalation'},
+    {id:'audit',icon:auditIcon(),label:'Audit Trail'},
+    {id:'admin',icon:settingsIcon(),label:'Admin Config'},
+  ]
+};
+
+function buildNav(){
+  const role=state.user.role;
+  const items=NAV_CONFIG[role]||[];
+  const container=document.getElementById('nav-items');
+  container.innerHTML='<div class="nav-label">Navigation</div>';
+  items.forEach(it=>{
+    const d=document.createElement('div');
+    d.className='nav-item';
+    d.id='nav-'+it.id;
+    d.innerHTML=`${it.icon}<span>${it.label}</span>`;
+    if(it.id==='team'){
+      const badge=document.createElement('span');
+      badge.className='nav-badge';
+      badge.id='pending-badge';
+      badge.textContent='1';
+      d.appendChild(badge);
+    }
+    d.onclick=()=>navigate(it.id);
+    container.appendChild(d);
+  });
+}
+
+function navigate(page){
+  state.currentPage=page;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const navEl=document.getElementById('nav-'+page);
+  if(navEl)navEl.classList.add('active');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  const titles={dashboard:'Dashboard',goals:'My Goals',checkin:'Quarterly Check-ins',team:'Team Goals',reports:'Reports & Export',analytics:'Analytics',admin:'Admin Configuration',escalation:'Escalation Module',audit:'Audit Trail'};
+  document.getElementById('topbar-title').textContent=titles[page]||page;
+  const renders={dashboard:renderDashboard,goals:renderGoals,checkin:renderCheckin,team:renderTeam,reports:renderReports,analytics:renderAnalytics,admin:renderAdmin,escalation:renderEscalation,audit:renderAudit};
+  if(renders[page])renders[page]();
+}
+
+/* ===========================
+   NOTIFICATIONS
+   =========================== */
+function buildNotifications(){
+  const unread=state.notifications.filter(n=>!n.read).length;
+  document.getElementById('notif-dot').style.display=unread>0?'':'none';
+  const panel=document.getElementById('notif-panel');
+  panel.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;"><span style="font-weight:600;font-size:13px;">Notifications</span><span class="yellow text-sm">${unread} unread</span></div>`;
+  state.notifications.forEach(n=>{
+    const d=document.createElement('div');
+    d.className='notif-item';
+    d.style.opacity=n.read?'.6':'1';
+    d.innerHTML=`<div class="notif-icon" style="background:var(--yellow-dim);">${n.icon}</div>
+    <div class="notif-content"><div class="title">${n.title}</div><div class="body">${n.body}</div><div class="time">${n.time}</div></div>`;
+    d.onclick=()=>{n.read=true;buildNotifications();};
+    panel.appendChild(d);
+  });
+  // Teams card bonus
+  panel.innerHTML+=`<div style="margin-top:16px;"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--grey);margin-bottom:8px;">Teams Integration</div>
+  <div class="teams-card"><div class="teams-header"><span style="font-size:18px;">💬</span><span style="color:#fff;font-weight:600;font-size:13px;">AtomQuest Bot</span></div>
+  <div class="teams-body"><div class="teams-fact"><span class="key">Event:</span><span class="val">Q2 Check-in Reminder</span></div>
+  <div class="teams-fact"><span class="key">Due:</span><span class="val">31 October 2025</span></div>
+  <div class="teams-fact"><span class="key">Status:</span><span class="val" style="color:#ffd740;">Pending</span></div>
+  <div style="margin-top:10px;"><button class="btn btn-primary btn-xs" onclick="teamsDeepLinkGoal(1)">Open Goal Sheet →</button></div></div></div></div>`;
+}
+function toggleNotif(){
+  state.notifOpen=!state.notifOpen;
+  document.getElementById('notif-panel').classList.toggle('hidden',!state.notifOpen);
+}
+function teamsDeepLinkGoal(goalId){
+  // Real deep-link: navigate to Goals page, scroll to & highlight the specific goal
+  if(state.notifOpen){state.notifOpen=false;document.getElementById('notif-panel').classList.add('hidden');}
+  navigate('goals');
+  setTimeout(()=>{
+    const goalEl=document.querySelector('.goal-item:nth-child('+(goalId)+')');
+    if(goalEl){
+      goalEl.scrollIntoView({behavior:'smooth',block:'center'});
+      goalEl.style.transition='box-shadow .3s,border-color .3s';
+      goalEl.style.boxShadow='0 0 0 2px var(--yellow)';
+      goalEl.style.borderColor='var(--yellow)';
+      setTimeout(()=>{goalEl.style.boxShadow='';goalEl.style.borderColor='';},2500);
+    }
+    toast('Navigated to goal sheet ✓','success');
+  },150);
+}
+function viewEmployeeGoals(empName){
+  // Navigate to team check-in and scroll to the employee's section
+  navigate('checkin');
+  setTimeout(()=>{
+    const sections=document.querySelectorAll('.checkin-manager-row');
+    sections.forEach(s=>{
+      if(s.dataset.emp===empName){
+        s.scrollIntoView({behavior:'smooth',block:'center'});
+        s.style.boxShadow='0 0 0 2px var(--yellow)';
+        setTimeout(()=>{s.style.boxShadow='';},2000);
+      }
+    });
+    toast('Viewing '+empName+'\'s goal sheet','info');
+  },150);
+}
+
+/* ===========================
+   DASHBOARD
+   =========================== */
+function renderDashboard(){
+  const role=state.user.role;
+  const el=document.getElementById('page-dashboard');
+  if(role==='employee') el.innerHTML=employeeDashboard();
+  else if(role==='manager') el.innerHTML=managerDashboard();
+  else el.innerHTML=adminDashboard();
+  renderInlineCharts();
+}
+
+function employeeDashboard(){
+  const goals=state.goals;
+  const totalW=goals.reduce((s,g)=>s+g.weightage,0);
+  const completed=goals.filter(g=>g.status.Q2==='Completed').length;
+  const avgScore=Math.round(goals.reduce((s,g)=>s+calcScore(g,'Q2'),0)/goals.length);
+  return `
+  <div class="checkin-window"><div class="icon">📋</div><div class="text"><strong>Q2 Check-in is OPEN</strong> · October 2025 · Update your achievement data before 31 Oct</div></div>
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-value">${goals.length}</div><div class="stat-label">Active Goals</div></div>
+    <div class="stat-card"><div class="stat-value">${totalW}%</div><div class="stat-label">Total Weightage</div></div>
+    <div class="stat-card"><div class="stat-value">${completed}</div><div class="stat-label">Q2 Completed</div></div>
+    <div class="stat-card"><div class="stat-value">${avgScore}%</div><div class="stat-label">Avg Progress</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+  <div class="card"><div class="card-header"><div class="card-title">Goal Progress</div></div>
+    ${goals.map(g=>`<div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;"><span>${g.title}</span><span class="yellow">${calcScore(g,'Q2')}%</span></div>
+      <div class="progress-bar"><div class="progress-fill ${calcScore(g,'Q2')>=100?'success':''}" style="width:${Math.min(calcScore(g,'Q2'),100)}%"></div></div>
+    </div>`).join('')}
+  </div>
+  <div class="card"><div class="card-header"><div class="card-title">Progress by Quarter</div></div>
+    <div id="qoq-chart"></div>
+  </div>
+  </div>`;
+}
+
+function managerDashboard(){
+  const pending=state.pendingGoals.filter(g=>g.status==='Pending Approval');
+  const submitted=state.teamMembers.filter(m=>m.goalsSubmitted>0).length;
+  const q2done=state.teamMembers.filter(m=>m.q2Done).length;
+  return `
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-value">${state.teamMembers.length}</div><div class="stat-label">Team Members</div></div>
+    <div class="stat-card"><div class="stat-value">${pending.length}</div><div class="stat-label">Pending Approval <span class="pulse" style="color:var(--yellow)">●</span></div></div>
+    <div class="stat-card"><div class="stat-value">${submitted}/${state.teamMembers.length}</div><div class="stat-label">Goals Submitted</div></div>
+    <div class="stat-card"><div class="stat-value">${q2done}/${state.teamMembers.length}</div><div class="stat-label">Q2 Check-ins Done</div></div>
+  </div>
+  <div class="card"><div class="card-header"><div class="card-title">Team Overview</div><button class="btn btn-ghost btn-sm" onclick="navigate('team')">View All →</button></div>
+  <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Goals</th><th>Q1</th><th>Q2</th><th>Avg Score</th><th>Status</th></tr></thead><tbody>
+  ${state.teamMembers.map(m=>`<tr><td><strong>${m.name}</strong><br><span class="grey text-sm">${m.dept}</span></td><td>${m.goalsApproved}/${m.goalsSubmitted}</td>
+  <td>${m.q1Done?'<span class="badge badge-green">Done</span>':'<span class="badge badge-grey">—</span>'}</td>
+  <td>${m.q2Done?'<span class="badge badge-green">Done</span>':'<span class="badge badge-yellow">Pending</span>'}</td>
+  <td><strong>${m.avgScore||'—'}%</strong></td>
+  <td>${m.goalsApproved===0?'<span class="badge badge-yellow">Needs Approval</span>':'<span class="badge badge-green">Active</span>'}</td></tr>`).join('')}
+  </tbody></table></div></div>
+  <div class="card"><div class="card-header"><div class="card-title">Pending Approvals</div></div>
+  ${pending.length?pending.map(g=>`<div class="goal-item"><div class="goal-num">!</div>
+  <strong>${g.title}</strong> <span class="shared-badge">Pending</span>
+  <div class="goal-meta"><span class="badge badge-yellow">${g.thrust}</span><span class="badge badge-grey">${g.uom}</span><span class="badge badge-grey">Wgt: ${g.weightage}%</span></div>
+  <div class="flex gap-2 mt-3">
+    <button class="btn btn-primary btn-sm" onclick="approveGoal(${g.id})">Approve</button>
+    <button class="btn btn-ghost btn-sm" onclick="returnGoal(${g.id})">Return for Rework</button>
+  </div></div>`).join(''):'<div class="empty-state"><div class="icon">✅</div><div class="text">No pending approvals</div></div>'}
+  </div>`;
+}
+
+function adminDashboard(){
+  const totalEmp=state.teamMembers.length;
+  const q2pct=Math.round((state.teamMembers.filter(m=>m.q2Done).length/totalEmp)*100);
+  return `
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-value">${totalEmp}</div><div class="stat-label">Total Employees</div></div>
+    <div class="stat-card"><div class="stat-value">${q2pct}%</div><div class="stat-label">Q2 Check-in Rate</div></div>
+    <div class="stat-card"><div class="stat-value">${state.escalationLog.length}</div><div class="stat-label">Active Escalations</div></div>
+    <div class="stat-card"><div class="stat-value">${state.auditLog.length}</div><div class="stat-label">Audit Events</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+  <div class="card"><div class="card-header"><div class="card-title">Check-in Completion</div></div>
+  <div id="heatmap-container"></div>
+  </div>
+  <div class="card"><div class="card-header"><div class="card-title">Goal Distribution by Thrust</div></div>
+  <div id="donut-container"></div>
+  </div>
+  </div>
+  <div class="card"><div class="card-header"><div class="card-title">Check-in Schedule</div></div>
+  <div class="table-wrap"><table class="schedule-table"><thead><tr><th>Period</th><th>Window Opens</th><th>Action</th><th>Status</th></tr></thead><tbody>
+  ${CYCLE_WINDOWS.map((w,i)=>`<tr><td><strong>${w.period}</strong></td><td>${w.opens}</td><td>${w.action}</td>
+  <td>${i<2?'<span class="badge badge-green">Completed</span>':i===2?'<span class="badge badge-yellow pulse">Active</span>':'<span class="badge badge-grey">Upcoming</span>'}</td></tr>`).join('')}
+  </tbody></table></div></div>`;
+}
+
+function renderInlineCharts(){
+  renderQoQChart();
+  renderHeatmap();
+  renderDonut();
+}
+
+function renderQoQChart(){
+  const el=document.getElementById('qoq-chart');
+  if(!el)return;
+  const data=[{q:'Q1',val:74},{q:'Q2',val:87},{q:'Q3',val:0},{q:'Q4',val:0}];
+  const max=100;
+  el.innerHTML=`<div class="bar-chart">${data.map(d=>`<div class="bar-wrap">
+    <div class="bar-val">${d.val||'—'}${d.val?'%':''}</div>
+    <div class="bar" style="height:${(d.val/max)*140}px;${d.val===0?'background:var(--black4);':''}" title="${d.q}: ${d.val}%"></div>
+    <div class="bar-label">${d.q}</div>
+  </div>`).join('')}</div>
+  <div style="font-size:11px;color:var(--grey);text-align:center;margin-top:4px;">Quarter-on-Quarter Achievement %</div>`;
+}
+
+function renderHeatmap(){
+  const el=document.getElementById('heatmap-container');
+  if(!el)return;
+  const members=state.teamMembers;
+  const quarters=['Q1','Q2','Q3','Q4'];
+  el.innerHTML=`<div style="display:flex;gap:4px;margin-bottom:6px;padding-left:80px;">${quarters.map(q=>`<div style="flex:1;text-align:center;font-size:10px;color:var(--grey);">${q}</div>`).join('')}</div>`;
+  members.forEach(m=>{
+    const vals=[m.q1Done,m.q2Done,m.q3Done,false];
+    el.innerHTML+=`<div style="display:flex;gap:4px;margin-bottom:4px;align-items:center;">
+    <div style="width:80px;font-size:11px;color:var(--grey);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.name.split(' ')[0]}</div>
+    ${vals.map(v=>`<div style="flex:1;height:28px;border-radius:3px;background:${v?'var(--yellow)':m.goalsApproved===0?'var(--red)':'var(--black4)'};opacity:${v?'1':'.5'};"></div>`).join('')}</div>`;
+  });
+  el.innerHTML+=`<div style="font-size:10px;color:var(--grey);margin-top:8px;">🟡 Completed &nbsp; ⬛ Pending &nbsp; 🔴 Not started</div>`;
+}
+
+function renderDonut(){
+  const el=document.getElementById('donut-container');
+  if(!el)return;
+  const thrusts={};
+  state.goals.forEach(g=>{thrusts[g.thrust]=(thrusts[g.thrust]||0)+1;});
+  const total=state.goals.length;
+  const colors=['#f5c518','#ffd740','#e6b800','#ffab00','#ff8f00','#ff6f00','#888','#555'];
+  const items=Object.entries(thrusts);
+  let cumulative=0;
+  let svgPaths='';
+  items.forEach(([name,count],i)=>{
+    const pct=count/total;
+    const startAngle=cumulative*2*Math.PI-Math.PI/2;
+    const endAngle=(cumulative+pct)*2*Math.PI-Math.PI/2;
+    const x1=50+40*Math.cos(startAngle);
+    const y1=50+40*Math.sin(startAngle);
+    const x2=50+40*Math.cos(endAngle);
+    const y2=50+40*Math.sin(endAngle);
+    const large=pct>0.5?1:0;
+    svgPaths+=`<path d="M50,50 L${x1},${y1} A40,40 0 ${large},1 ${x2},${y2} Z" fill="${colors[i]}" stroke="var(--black2)" stroke-width="1"/>`;
+    cumulative+=pct;
+  });
+  el.innerHTML=`<svg viewBox="0 0 100 100" width="160" class="donut-svg">${svgPaths}<circle cx="50" cy="50" r="22" fill="var(--black2)"/><text x="50" y="54" text-anchor="middle" fill="var(--yellow)" font-size="10" font-weight="bold">${total} Goals</text></svg>
+  <div style="margin-top:10px;">${items.map(([n,c],i)=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><div style="width:10px;height:10px;border-radius:2px;background:${colors[i]};flex-shrink:0;"></div><span style="font-size:11px;color:var(--grey);">${n}</span><span style="font-size:11px;color:var(--white);margin-left:auto;">${c}</span></div>`).join('')}</div>`;
+}
+
+/* ===========================
+   GOALS PAGE (EMPLOYEE)
+   =========================== */
+function renderGoals(){
+  const el=document.getElementById('page-goals');
+  const allGoals=[...state.goals,...state.pendingGoals].filter(g=>g.owner==='employee');
+  const totalW=allGoals.reduce((s,g)=>s+g.weightage,0);
+  const wgtClass=totalW===100?'wgt-100':totalW>100?'wgt-over':'wgt-under';
+  el.innerHTML=`
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-header">
+      <div>
+        <div class="card-title">My Goal Sheet — FY2025</div>
+        <div style="font-size:12px;color:var(--grey);margin-top:2px;">Max 8 goals · Min 10% per goal · Total must equal 100%</div>
+      </div>
+      <div class="flex gap-2">
+        ${allGoals.length<state.adminConfig.maxGoals?`<button class="btn btn-primary btn-sm" onclick="openAddGoalModal()">+ Add Goal</button>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="openSharedGoalModal()">📤 Shared Goals</button>
+        <button class="btn btn-primary btn-sm" onclick="submitGoalSheet()" title="Submit all goals for approval (requires 100% weightage)" id="submit-sheet-btn">✓ Submit Sheet</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--black5);">
+      <div style="flex:1;">
+        <div class="weightage-label"><span>Total Weightage</span><span class="${totalW===100?'green':totalW>100?'red':'yellow'}">${totalW}% / 100%</span></div>
+        <div class="wgt-meter"><div class="wgt-fill ${wgtClass}" style="width:${Math.min(totalW,100)}%"></div></div>
+      </div>
+      <div style="text-align:right;">
+  <span class="badge ${totalW===100?'badge-green':totalW>100?'badge-red':'badge-yellow'}" style="display:block;margin-bottom:4px;">${totalW===100?'✓ Ready to Submit':totalW>100?'⚠ Over 100%':'⚠ '+( 100-totalW)+'% remaining'}</span>
+  ${totalW===100?'<span style="font-size:10px;color:var(--green);">All validations passed</span>':'<span style="font-size:10px;color:var(--grey);">Must reach 100% to submit</span>'}
+</div>
+    </div>
+  </div>
+  <div id="goals-list">
+  ${allGoals.map((g,i)=>renderGoalCard(g,i)).join('')}
+  </div>
+  ${allGoals.length===0?'<div class="empty-state"><div class="icon">🎯</div><div class="text">No goals yet. Click "+ Add Goal" to get started.</div></div>':''}`;
+}
+
+function renderGoalCard(g,i){
+  const isShared=g.shared;
+  const isPending=g.status==='Pending Approval';
+  return `<div class="goal-item">
+  <div class="goal-num">${i+1}</div>
+  <div class="flex items-center gap-2 mb-2" style="flex-wrap:wrap;">
+    <strong style="font-size:14px;">${g.title}</strong>
+    ${isShared?'<span class="shared-badge">Shared</span>':''}
+    ${isPending?'<span class="badge badge-yellow">Pending Approval</span>':''}
+    ${g.locked&&!isPending?'<span class="badge badge-grey">🔒 Locked</span>':''}
+  </div>
+  <div style="font-size:12px;color:var(--grey);margin-bottom:8px;">${g.desc||''}</div>
+  <div class="goal-meta">
+    <span class="badge badge-yellow">${g.thrust}</span>
+    <span class="badge badge-grey">${g.uom}</span>
+    <span class="badge badge-grey">Target: ${g.target}</span>
+    <span class="badge badge-grey">Wgt: ${g.weightage}%</span>
+  </div>
+  ${!isPending?`<div style="margin-top:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+  ${['Q1','Q2','Q3','Q4'].map(q=>{
+    const ach=g.achievement&&g.achievement[q];
+    const score=calcScore(g,q);
+    return `<div style="background:var(--black4);border-radius:4px;padding:8px;text-align:center;">
+    <div style="font-size:10px;color:var(--grey);margin-bottom:2px;">${q}</div>
+    <div style="font-size:13px;font-weight:600;color:${ach!==null&&ach!==undefined?'var(--yellow)':'var(--grey)'}">${ach!==null&&ach!==undefined?ach:'—'}</div>
+    <div style="font-size:10px;color:var(--green);">${ach!==null&&ach!==undefined?score+'%':''}</div>
+    </div>`;
+  }).join('')}
+  </div>`:''}
+  ${!g.locked||isPending?`<div class="flex gap-2 mt-3">
+    ${isPending?'<span class="grey text-sm italic">Awaiting manager approval...</span>':
+    `<button class="btn btn-ghost btn-xs" onclick="openEditGoalModal(${g.id})">Edit</button>
+     <button class="btn btn-danger btn-xs" onclick="deleteGoal(${g.id})">Delete</button>`}
+  </div>`:''}
+  </div>`;
+}
+
+function submitGoalSheet(){
+  const allGoals=[...state.goals,...state.pendingGoals].filter(g=>g.owner==='employee');
+  const pending=state.pendingGoals.filter(g=>g.owner==='employee'&&g.status==='Pending Approval');
+  if(pending.length===0){toast('No pending goals to submit. Add goals first.','error');return;}
+  const totalW=allGoals.reduce((s,g)=>s+g.weightage,0);
+  if(totalW!==100){
+    toast(`Total weightage is ${totalW}% — must be exactly 100% before submitting.`,'error');
+    // Highlight the meter
+    const meter=document.querySelector('.wgt-meter');
+    if(meter){meter.style.boxShadow='0 0 0 2px var(--red)';setTimeout(()=>meter.style.boxShadow='',2000);}
+    return;
+  }
+  if(allGoals.length<1){toast('Add at least one goal before submitting.','error');return;}
+  openModal('Confirm Goal Sheet Submission',
+    `<p style="font-size:14px;color:var(--grey);line-height:1.7;">You are about to submit <strong style="color:var(--white);">${pending.length} goal(s)</strong> for manager approval.<br/>Total weightage: <strong style="color:var(--green);">${totalW}%</strong><br/>Once submitted, goals will be locked after approval.</p>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="confirmSubmitSheet()">Confirm & Submit</button>`
+  );
+}
+function confirmSubmitSheet(){
+  closeModal();
+  toast('Goal sheet submitted to manager for approval!','success');
+  addAudit('Alice Sharma (Employee)','Submitted goal sheet for approval','All pending goals','Pending Manager review');
+  state.notifications.unshift({id:Date.now(),type:'submit',title:'Goal Sheet Submitted',body:'Alice Sharma submitted goal sheet for approval',time:'Just now',read:false,icon:'📤'});
+  buildNotifications();
+}
+function calcScore(g,q){
+  const ach=g.achievement&&g.achievement[q];
+  if(ach===null||ach===undefined)return 0;
+  const tgt=g.target;
+  const uom=g.uom;
+  if(uom.includes('Min')||uom==='Percentage (Min)'){
+    return Math.round(Math.min((ach/tgt)*100,150));
+  } else if(uom.includes('Max')||uom==='Percentage (Max)'){
+    return Math.round(Math.min((tgt/ach)*100,150));
+  } else if(uom==='Zero'){
+    return ach===0?100:0;
+  } else if(uom==='Timeline'){
+    return ach&&tgt?(new Date(ach)<=new Date(tgt)?100:60):0;
+  }
+  return Math.round(Math.min((ach/tgt)*100,100));
+}
+
+function updateWgtHint(val, existingWgt){
+  const hint=document.getElementById('wgt-hint');
+  if(!hint)return;
+  const wgt=parseInt(val)||0;
+  const currentTotal=[...state.goals,...state.pendingGoals].filter(g=>g.owner==='employee').reduce((s,g)=>s+g.weightage,0);
+  const adjustedTotal=currentTotal-existingWgt+wgt;
+  const remaining=100-currentTotal+existingWgt;
+  if(adjustedTotal===100){
+    hint.innerHTML='<span style="color:var(--green)">✓ Total will be exactly 100%</span>';
+  } else if(adjustedTotal>100){
+    hint.innerHTML=`<span style="color:var(--red)">✗ Exceeds 100% by ${adjustedTotal-100}% (remaining: ${remaining}%)</span>`;
+  } else {
+    hint.innerHTML=`<span style="color:var(--grey)">After adding: ${adjustedTotal}% total (${100-adjustedTotal}% remaining)</span>`;
+  }
+}
+function openAddGoalModal(){
+  openModal('Add New Goal',goalFormHTML(null),`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="submitGoal()">Submit for Approval</button>`);
+}
+function openEditGoalModal(id){
+  const g=state.pendingGoals.find(x=>x.id===id);
+  if(!g){toast('Goal is locked. Contact admin to unlock.','error');return;}
+  openModal('Edit Goal',goalFormHTML(g),`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="updateGoal(${id})">Update Goal</button>`);
+}
+function goalFormHTML(g){
+  return `
+  <div class="form-grid">
+  <div class="input-group col-span-2"><label>Goal Title *</label><input id="gf-title" value="${g?g.title:''}"/></div>
+  <div class="input-group"><label>Thrust Area *</label><select id="gf-thrust">${THRUST_AREAS.map(t=>`<option ${g&&g.thrust===t?'selected':''}>${t}</option>`).join('')}</select></div>
+  <div class="input-group"><label>Unit of Measurement *</label><select id="gf-uom">${UOM_TYPES.map(u=>`<option ${g&&g.uom===u?'selected':''}>${u}</option>`).join('')}</select></div>
+  <div class="input-group"><label>Target *</label><input id="gf-target" type="text" value="${g?g.target:''}"/></div>
+  <div class="input-group"><label>Weightage (%) * <span class="grey">[Min 10%]</span></label>
+    <input id="gf-wgt" type="number" min="10" max="100" value="${g?g.weightage:10}" oninput="updateWgtHint(this.value,${g?g.weightage:0})"/>
+    <div id="wgt-hint" style="font-size:11px;margin-top:4px;"></div>
+  </div>
+  <div class="input-group col-span-2"><label>Description</label><textarea id="gf-desc">${g?g.desc:''}</textarea></div>
+  </div>
+  <div style="background:var(--yellow-dim2);border:1px solid var(--black5);border-radius:4px;padding:10px;font-size:12px;color:var(--grey);margin-top:8px;">
+  ⚡ Validation: Total weightage must equal 100% · Min 10% per goal · Max 8 goals</div>`;
+}
+function submitGoal(){
+  const title=document.getElementById('gf-title').value.trim();
+  const thrust=document.getElementById('gf-thrust').value;
+  const uom=document.getElementById('gf-uom').value;
+  const target=document.getElementById('gf-target').value;
+  const wgt=parseInt(document.getElementById('gf-wgt').value);
+  const desc=document.getElementById('gf-desc').value;
+  if(!title||!target){toast('Please fill in all required fields','error');return;}
+  if(wgt<state.adminConfig.minWeightage){toast(`Minimum weightage is ${state.adminConfig.minWeightage}%`,'error');return;}
+  const allGoals=[...state.goals,...state.pendingGoals].filter(g=>g.owner==='employee');
+  if(allGoals.length>=state.adminConfig.maxGoals){toast(`Maximum ${state.adminConfig.maxGoals} goals allowed`,'error');return;}
+  const projectedTotal=allGoals.reduce((s,g)=>s+g.weightage,0)+wgt;
+  if(projectedTotal>100){toast(`Adding ${wgt}% would exceed 100% total (current: ${allGoals.reduce((s,g)=>s+g.weightage,0)}%). Adjust weightage.`,'error');return;}
+  const newGoal={id:Date.now(),owner:'employee',title,thrust,desc,uom,target,weightage:wgt,status:'Pending Approval',locked:false,shared:false,achievement:{Q1:null,Q2:null,Q3:null,Q4:null},checkinComments:{}};
+  state.pendingGoals.push(newGoal);
+  addAudit('Alice Sharma (Employee)','Submitted new goal',title,'Status: Pending Approval');
+  state.notifications.unshift({id:Date.now(),type:'submit',title:'Goal Submitted',body:`"${title}" sent to manager for approval`,time:'Just now',read:false,icon:'📤'});
+  closeModal();
+  toast('Goal submitted for approval!','success');
+  saveState();
+  renderGoals();
+  buildNotifications();
+}
+function updateGoal(id){
+  const g=state.pendingGoals.find(x=>x.id===id);
+  if(!g)return;
+  const newWgt=parseInt(document.getElementById('gf-wgt').value)||0;
+  if(newWgt<state.adminConfig.minWeightage){toast(`Minimum weightage is ${state.adminConfig.minWeightage}%`,'error');return;}
+  // Check total without this goal's old weightage
+  const otherTotal=[...state.goals,...state.pendingGoals].filter(pg=>pg.owner==='employee'&&pg.id!==id).reduce((s,pg)=>s+pg.weightage,0);
+  if(otherTotal+newWgt>100){toast(`Total weightage would be ${otherTotal+newWgt}% — must not exceed 100%.`,'error');return;}
+  g.title=document.getElementById('gf-title').value;
+  g.thrust=document.getElementById('gf-thrust').value;
+  g.uom=document.getElementById('gf-uom').value;
+  g.target=document.getElementById('gf-target').value;
+  g.weightage=newWgt;
+  g.desc=document.getElementById('gf-desc').value;
+  addAudit('Alice Sharma (Employee)','Edited goal',g.title,'Updated before approval');
+  closeModal();
+  saveState();
+  toast('Goal updated','success');
+  renderGoals();
+}
+function deleteGoal(id){
+  const g=state.pendingGoals.find(x=>x.id===id);
+  state.pendingGoals=state.pendingGoals.filter(pg=>pg.id!==id);
+  if(g)addAudit('Alice Sharma (Employee)','Deleted pending goal',g.title,'Removed before approval');
+  saveState();
+  toast('Goal deleted','info');
+  renderGoals();
+}
+function openSharedGoalModal(){
+  openModal('Shared Goals','<div class="card" style="margin:0;"><div style="margin-bottom:8px;font-size:13px;color:var(--grey);">Shared departmental KPIs pushed by your manager. You can adjust weightage only.</div><div class="goal-item"><strong>Departmental Revenue Target</strong> <span class="shared-badge">Shared by Bob Kumar</span><div class="goal-meta mt-2"><span class="badge badge-yellow">Revenue Growth</span><span class="badge badge-grey">Target: 2Cr (Read-only)</span></div><div class="input-group mt-3" style="max-width:200px;"><label>Your Weightage (%)</label><input type="number" value="20" min="10" max="40"/></div></div></div>',`<button class="btn btn-primary" onclick="toast(\'Weightage saved\',\'success\');closeModal()">Save Weightage</button>`);
+}
+
+/* ===========================
+   CHECK-IN PAGE
+   =========================== */
+function isCheckinWindowOpen(q){
+  const w=state.checkinWindowDates[q];
+  if(!w)return false;
+  const now=new Date();
+  return now>=new Date(w.opens)&&now<=new Date(w.closes);
+}
+function renderCheckin(){
+  const el=document.getElementById('page-checkin');
+  const role=state.user.role;
+  const q=state.activeCheckinQuarter;
+  const windowOpen=isCheckinWindowOpen(q);
+  // For demo purposes: Q2 is always treated as open, others are enforced
+  const isQ2=q==='Q2';
+  const effectivelyOpen=isQ2||windowOpen;
+  if(role==='employee'){
+    const qLabels={'Q1':'Q1 (Jul)','Q2':'Q2 (Oct)','Q3':'Q3 (Jan)','Q4':'Q4 (Apr)'};
+    el.innerHTML=`
+    <div class="checkin-window" style="${effectivelyOpen?'':'background:rgba(229,57,53,0.08);border-color:rgba(229,57,53,.3);'}">
+      <div class="icon">${effectivelyOpen?'🟡':'🔒'}</div>
+      <div class="text">
+        ${effectivelyOpen
+          ?`<strong>${q} Check-in is OPEN</strong> · Log your actual achievements against planned targets`
+          :`<strong>${q} Check-in is CLOSED</strong> · Window: ${state.checkinWindowDates[q]?.opens||'TBD'} – ${state.checkinWindowDates[q]?.closes||'TBD'}. Inputs are read-only.`
+        }
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">${q} Achievement Entry</div>
+      <div>
+        <select class="btn btn-ghost btn-sm" style="background:transparent;color:var(--yellow);border-color:var(--yellow);" onchange="switchCheckinQuarter(this.value)">
+          ${['Q1','Q2','Q3','Q4'].map(qo=>`<option value="${qo}" ${qo===q?'selected':''}>${qLabels[qo]}</option>`).join('')}
+        </select>
+      </div></div>
+      ${state.goals.map(g=>checkinRowEmployee(g,q,effectivelyOpen)).join('')}
+      <div style="margin-top:16px;text-align:right;">
+        <button class="btn btn-primary" onclick="saveCheckin('${q}')" ${effectivelyOpen?'':'disabled'} title="${effectivelyOpen?'':'Check-in window is closed for this quarter'}">
+          Save ${q} Achievement${effectivelyOpen?'':'(Window Closed)'}
+        </button>
+      </div>
+    </div>`;
+  } else {
+    el.innerHTML=`
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Team Check-in — ${q}</div>
+        <select class="btn btn-ghost btn-sm" style="background:transparent;color:var(--yellow);border-color:var(--yellow);" onchange="switchCheckinQuarter(this.value)">
+          ${['Q1','Q2','Q3','Q4'].map(qo=>`<option value="${qo}" ${qo===q?'selected':''}>${qo}</option>`).join('')}
+        </select>
+      </div>
+      ${state.teamMembers.map(m=>checkinManagerView(m,q)).join('')}
+    </div>`;
+  }
+}
+function switchCheckinQuarter(q){
+  state.activeCheckinQuarter=q;
+  renderCheckin();
+}
+
+function checkinRowEmployee(g,q,windowOpen=true){
+  const ach=g.achievement&&g.achievement[q];
+  const isTimeline=g.uom==='Timeline';
+  const roAttr=!windowOpen?'readonly disabled':'';
+  const roStyle=!windowOpen?'opacity:.5;cursor:not-allowed;':'';
+  return `<div style="border-bottom:1px solid var(--black5);padding:14px 0;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;">
+  <div>
+    <div style="font-weight:600;font-size:13px;margin-bottom:4px;">${g.title}</div>
+    <div class="goal-meta">
+      <span class="badge badge-yellow">${g.thrust}</span>
+      <span class="badge badge-grey">${g.uom}</span>
+      <span class="badge badge-grey">Target: ${g.target}</span>
+      <span class="badge badge-grey">Wgt: ${g.weightage}%</span>
+      ${g.shared?'<span class="badge" style="background:rgba(100,181,246,.15);color:#64b5f6;">🔗 Shared · Auto-synced</span>':''}
+    </div>
+    ${ach!==null&&ach!==undefined?`<div class="mt-2"><div class="progress-bar"><div class="progress-fill" style="width:${Math.min(calcScore(g,q),100)}%"></div></div><div style="font-size:11px;color:var(--green);margin-top:2px;">Score: ${calcScore(g,q)}%</div></div>`:''}
+  </div>
+  <div style="min-width:200px;">
+    <div class="input-group" style="margin-bottom:8px;"><label>Actual Achievement${!windowOpen?' <span style=\'color:var(--red);font-size:10px;\'>(Window Closed)</span>':''}</label>
+    <input id="ach-${g.id}-${q}" type="${isTimeline?'date':'number'}" value="${ach!==null&&ach!==undefined?ach:''}" placeholder="Enter actual" ${roAttr} style="${roStyle}"/>
+    </div>
+    <div class="input-group" style="margin-bottom:0;"><label>Status</label>
+    <select id="sta-${g.id}-${q}" ${!windowOpen?'disabled':''} style="${roStyle}">
+      <option ${g.status[q]==='Not Started'?'selected':''}>Not Started</option>
+      <option ${g.status[q]==='On Track'?'selected':''}>On Track</option>
+      <option ${g.status[q]==='Completed'?'selected':''}>Completed</option>
+    </select></div>
+  </div>
+  </div>`;
+}
+
+function checkinManagerView(m,q){
+  q=q||state.activeCheckinQuarter;
+  const qDoneKey={Q1:'q1Done',Q2:'q2Done',Q3:'q3Done'}[q];
+  const isDone=m[qDoneKey];
+  return `<div class="checkin-manager-row" data-emp="${m.name}" style="border-bottom:1px solid var(--black5);padding:16px 0;">
+  <div class="flex items-center gap-3 mb-3">
+    <div class="user-avatar" style="width:32px;height:32px;font-size:14px;">${m.name[0]}</div>
+    <div><strong>${m.name}</strong><br><span class="grey text-sm">${m.dept}</span></div>
+    <div style="margin-left:auto;">${isDone?'<span class="badge badge-green">'+q+' Done</span>':'<span class="badge badge-yellow">Pending</span>'}</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;">
+    ${['Q1','Q2','Q3','Q4'].map(qo=>`<div style="background:var(--black4);border-radius:4px;padding:8px;text-align:center;${qo===q?'border:1px solid var(--yellow);':''}">
+    <div style="font-size:10px;color:var(--grey);">${qo}${qo===q?' ●':''}</div>
+    <div style="font-size:16px;font-family:var(--font-display);color:${m[{Q1:'q1Done',Q2:'q2Done',Q3:'q3Done'}[qo]]?'var(--green)':qo===q?'var(--yellow)':'var(--grey)'};">
+      ${qo==='Q1'?m.avgScore+'%':m[{Q1:'q1Done',Q2:'q2Done',Q3:'q3Done'}[qo]]?m.avgScore+'%':'—'}
+    </div>
+    </div>`).join('')}
+  </div>
+  <div class="input-group"><label>Manager Check-in Comment (${q})</label>
+  <textarea id="mgr-comment-${m.id}-${q}" placeholder="Add structured check-in note for ${m.name}...">${m.checkinComments&&m.checkinComments[q]||''}</textarea></div>
+  <div class="flex gap-2 mt-2">
+    <button class="btn btn-primary btn-sm" onclick="saveManagerComment('${m.id}','${q}')">Save Comment</button>
+    <button class="btn btn-ghost btn-sm" onclick="viewEmployeeGoals('${m.name}')">📋 View Goal Sheet →</button>
+  </div>
+  </div>`;
+}
+
+function saveCheckin(q){
+  q=q||state.activeCheckinQuarter;
+  const isQ2=q==='Q2';
+  const windowOpen=isQ2||isCheckinWindowOpen(q);
+  if(!windowOpen){toast('Check-in window is closed for '+q,'error');return;}
+  state.goals.forEach(g=>{
+    const achEl=document.getElementById('ach-'+g.id+'-'+q);
+    const staEl=document.getElementById('sta-'+g.id+'-'+q);
+    if(achEl&&achEl.value!==''){
+      g.achievement[q]=g.uom==='Timeline'?achEl.value:parseFloat(achEl.value);
+    }
+    if(staEl&&staEl.value){g.status[q]=staEl.value;}
+  });
+  const qDoneMap={Q1:'q1Done',Q2:'q2Done',Q3:'q3Done'};
+  if(qDoneMap[q]){
+    const m=state.teamMembers.find(x=>x.id==='emp1');
+    if(m)m[qDoneMap[q]]=true;
+  }
+  addAuditLocked('Alice Sharma (Employee)','Submitted '+q+' achievement update','All goals',q+' actuals recorded');
+  // Sync shared goal achievements to all linked copies
+  goals.forEach(g=>{
+    if(g.shared && g.achievement[q]!==null){
+      state.pendingGoals.forEach(pg=>{if(pg.sharedFrom===g.id){pg.achievement[q]=g.achievement[q];}});
+      state.goals.forEach(ag=>{if(ag.sharedFrom===g.id){ag.achievement[q]=g.achievement[q];}});
+    }
+  });
+  toast(q+' achievements saved & synced to shared goals!','success');
+  saveState();
+  renderCheckin();
+}
+function saveManagerComment(empId,q){
+  q=q||state.activeCheckinQuarter;
+  const m=state.teamMembers.find(x=>x.id===empId);
+  const commentEl=document.getElementById('mgr-comment-'+empId+'-'+q);
+  if(m&&commentEl){
+    if(!m.checkinComments)m.checkinComments={};
+    m.checkinComments[q]=commentEl.value;
+  }
+  addAuditLocked(state.user.name+' (Manager)','Added '+q+' check-in comment','Team member #'+empId,'Comment: '+(commentEl?commentEl.value.slice(0,40):'saved'));
+  toast(q+' check-in comment saved','success');
+  saveState();
+}
+
+/* ===========================
+   TEAM PAGE (MANAGER)
+   =========================== */
+function renderTeam(){
+  const el=document.getElementById('page-team');
+  const pending=state.pendingGoals.filter(g=>g.status==='Pending Approval');
+  const badge=document.getElementById('pending-badge');
+  if(badge)badge.textContent=pending.length||'';
+  if(badge)badge.style.display=pending.length?'':'none';
+  el.innerHTML=`
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'tab-pending')">Pending Approvals (${pending.length})</div>
+    <div class="tab" onclick="switchTab(this,'tab-team')">Team Members</div>
+    <div class="tab" onclick="switchTab(this,'tab-shared')">Push Shared Goal</div>
+  </div>
+  <div id="tab-pending">
+    ${pending.length?pending.map(g=>`<div class="goal-item">
+    <div class="goal-num">!</div>
+    <div class="flex items-center gap-2 mb-2"><strong>${g.title}</strong><span class="badge badge-yellow">Needs Review</span></div>
+    <div class="goal-meta"><span class="badge badge-yellow">${g.thrust}</span><span class="badge badge-grey">${g.uom}</span><span class="badge badge-grey">Target: ${g.target}</span><span class="badge badge-grey">Wgt: ${g.weightage}%</span></div>
+    <div style="font-size:12px;color:var(--grey);margin-top:6px;">${g.desc}</div>
+    <hr class="section-divider"/>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div class="input-group" style="margin:0;"><label>Edit Target (inline)</label><input value="${g.target}"/></div>
+      <div class="input-group" style="margin:0;"><label>Edit Weightage (%)</label><input type="number" value="${g.weightage}" min="10"/></div>
+    </div>
+    <div class="flex gap-2">
+      <button class="btn btn-primary btn-sm" onclick="approveGoal(${g.id})">✓ Approve & Lock</button>
+      <button class="btn btn-ghost btn-sm" onclick="returnGoal(${g.id})">↩ Return for Rework</button>
+    </div></div>`).join(''):'<div class="empty-state"><div class="icon">✅</div><div class="text">No pending approvals</div></div>'}
+  </div>
+  <div id="tab-team" class="hidden">
+    <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Dept</th><th>Goals</th><th>Q1</th><th>Q2</th><th>Avg Score</th><th>Actions</th></tr></thead><tbody>
+    ${state.teamMembers.map(m=>`<tr><td><strong>${m.name}</strong></td><td>${m.dept}</td>
+    <td>${m.goalsApproved}/${m.goalsSubmitted}</td>
+    <td>${m.q1Done?'<span class="badge badge-green">Done</span>':'<span class="badge badge-grey">—</span>'}</td>
+    <td>${m.q2Done?'<span class="badge badge-green">Done</span>':'<span class="badge badge-yellow">Pending</span>'}</td>
+    <td><strong class="${m.avgScore>=80?'green':m.avgScore>=60?'yellow':'red'}">${m.avgScore||'—'}%</strong></td>
+    <td><button class="btn btn-ghost btn-xs" onclick="viewEmployeeGoals('${m.name}')">📋 View Goals</button></td></tr>`).join('')}
+    </tbody></table></div>
+  </div>
+  <div id="tab-shared" class="hidden">
+    <div class="card" style="margin:0;">
+      <div class="card-title mb-3">Push Shared Departmental KPI</div>
+      <div class="form-grid">
+        <div class="input-group col-span-2"><label>Goal Title</label><input value="Departmental Revenue Target Q3"/></div>
+        <div class="input-group"><label>Thrust Area</label><select>${THRUST_AREAS.map(t=>`<option>${t}</option>`).join('')}</select></div>
+        <div class="input-group"><label>UoM</label><select>${UOM_TYPES.map(u=>`<option>${u}</option>`).join('')}</select></div>
+        <div class="input-group col-span-2"><label>Target (read-only for recipients)</label><input value="2,00,00,000"/></div>
+        <div class="input-group col-span-2"><label>Push to Employees</label>
+          ${state.teamMembers.map(m=>`<label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer;font-size:13px;"><input type="checkbox" checked style="accent-color:var(--yellow)"/> ${m.name}</label>`).join('')}
+        </div>
+      </div>
+      <button class="btn btn-primary mt-3" onclick="pushSharedGoal()">📤 Push to Selected Employees</button>
+    </div>
+  </div>`;
+}
+
+function approveGoal(id){
+  const g=state.pendingGoals.find(x=>x.id===id);
+  if(!g)return;
+  g.status='Approved';
+  g.locked=true;
+  state.goals.push(g);
+  state.pendingGoals=state.pendingGoals.filter(x=>x.id!==id);
+  state.teamMembers[0].goalsApproved++;
+  addAudit('Bob Kumar (Manager)','Approved goal',g.title,'Goal locked');
+  state.notifications.unshift({id:Date.now(),type:'approval',title:'Goal Approved',body:`"${g.title}" approved and locked`,time:'Just now',read:false,icon:'✅'});
+  toast(`"${g.title}" approved and locked!`,'success');
+  saveState();
+  renderTeam();
+  buildNotifications();
+}
+function returnGoal(id){
+  const g=state.pendingGoals.find(x=>x.id===id);
+  if(!g)return;
+  g.status='Returned';
+  addAudit('Bob Kumar (Manager)','Returned goal for rework',g.title,'Awaiting resubmission');
+  toast('Goal returned for rework','info');
+  renderTeam();
+}
+function pushSharedGoal(){
+  // Get the selected shared goal template from shared goals list
+  const sharedTemplates=state.goals.filter(g=>g.shared&&g.owner!=='employee');
+  const template=sharedTemplates[0]||state.goals.find(g=>g.shared);
+  if(template){
+    // Check if already pushed
+    const alreadyPushed=state.goals.find(g=>g.sharedFrom===template.id&&g.owner==='employee');
+    if(!alreadyPushed){
+      const pushedGoal={...template,id:Date.now(),owner:'employee',shared:true,locked:true,
+        weightage:10,status:'Approved',sharedFrom:template.id,
+        achievement:{Q1:null,Q2:null,Q3:null,Q4:null},checkinComments:{}};
+      state.goals.push(pushedGoal);
+    }
+    // Sync latest achievement from primary to all copies
+    state.goals.forEach(g=>{
+      if(g.sharedFrom===template.id){
+        Object.keys(template.achievement||{}).forEach(q=>{
+          if(template.achievement[q]!==null) g.achievement[q]=template.achievement[q];
+        });
+      }
+    });
+  }
+  addAudit('Bob Kumar (Manager)','Pushed shared goal to employees','Departmental KPI','Synced to 4 employees');
+  toast('Shared goal pushed to 4 employees & achievement synced!','success');
+  saveState();
+  state.notifications.unshift({id:Date.now(),type:'shared',title:'Shared Goal Pushed',body:'Departmental Revenue Target pushed to team',time:'Just now',read:false,icon:'📤'});
+  buildNotifications();
+}
+function switchTab(btn,tabId){
+  const tabs=['tab-pending','tab-team','tab-shared'];
+  tabs.forEach(t=>{document.getElementById(t).classList.toggle('hidden',t!==tabId);});
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ===========================
+   REPORTS PAGE
+   =========================== */
+function renderReports(){
+  const el=document.getElementById('page-reports');
+  el.innerHTML=`
+  <div class="tabs">
+    <div class="tab active" onclick="switchTabEl(this,'rpt-achievement')">Achievement Report</div>
+    <div class="tab" onclick="switchTabEl(this,'rpt-completion')">Completion Dashboard</div>
+  </div>
+  <div id="rpt-achievement">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Planned vs. Actual Achievement</div>
+      <div class="flex gap-2">
+        <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportExcel()">⬇ Export Excel</button>
+      </div></div>
+      <div class="table-wrap"><table>
+      <thead><tr><th>Employee</th><th>Goal</th><th>UoM</th><th>Target</th><th>Q1 Actual</th><th>Q2 Actual</th><th>Q1 Score</th><th>Q2 Score</th><th>Status</th></tr></thead>
+      <tbody>
+      ${state.goals.filter(g=>g.owner==='employee').map(g=>`<tr>
+        <td>Alice Sharma</td>
+        <td>${g.title} ${g.shared?'<span class="shared-badge">Shared</span>':''}</td>
+        <td>${g.uom}</td>
+        <td>${g.target}</td>
+        <td>${g.achievement.Q1!==null&&g.achievement.Q1!==undefined?g.achievement.Q1:'—'}</td>
+        <td>${g.achievement.Q2!==null&&g.achievement.Q2!==undefined?g.achievement.Q2:'—'}</td>
+        <td><strong class="yellow">${calcScore(g,'Q1')||'—'}${calcScore(g,'Q1')?'%':''}</strong></td>
+        <td><strong class="yellow">${calcScore(g,'Q2')||'—'}${calcScore(g,'Q2')?'%':''}</strong></td>
+        <td><span class="badge ${g.status.Q2==='Completed'?'badge-green':g.status.Q2==='On Track'?'badge-yellow':'badge-grey'}">${g.status.Q2}</span></td>
+      </tr>`).join('')}
+      </tbody></table></div>
+    </div>
+  </div>
+  <div id="rpt-completion" class="hidden">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Check-in Completion Dashboard</div></div>
+      <div class="table-wrap"><table>
+      <thead><tr><th>Employee</th><th>Goal Setting</th><th>Q1 Check-in</th><th>Q2 Check-in</th><th>Q3 Check-in</th><th>Q4 / Annual</th></tr></thead>
+      <tbody>
+      ${state.teamMembers.map(m=>`<tr>
+        <td><strong>${m.name}</strong></td>
+        <td><span class="badge badge-green">✓</span></td>
+        <td>${m.q1Done?'<span class="badge badge-green">✓</span>':'<span class="badge badge-red">✗</span>'}</td>
+        <td>${m.q2Done?'<span class="badge badge-green">✓</span>':'<span class="badge badge-yellow">Pending</span>'}</td>
+        <td><span class="badge badge-grey">—</span></td>
+        <td><span class="badge badge-grey">—</span></td>
+      </tr>`).join('')}
+      </tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Manager Effectiveness — Cross-Manager Comparison</div></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px;">
+        <div class="stat-card"><div class="stat-value" id="me-approval-rate">—</div><div class="stat-label">Goal Approval Rate</div></div>
+        <div class="stat-card"><div class="stat-value" id="me-q1-rate">—</div><div class="stat-label">Q1 Check-in Rate</div></div>
+        <div class="stat-card"><div class="stat-value" id="me-q2-rate">—</div><div class="stat-label">Q2 Check-in Rate</div></div>
+        <div class="stat-card"><div class="stat-value">2.1d</div><div class="stat-label">Avg Approval Time</div></div>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Manager</th><th>Team Size</th><th>Goals Approved</th><th>Q1 Check-in %</th><th>Q2 Check-in %</th><th>Avg Team Score</th><th>Pending</th></tr></thead>
+      <tbody id="mgr-effectiveness-rows"></tbody></table></div>
+    </div>
+  </div>`;
+}
+
+function switchTabEl(btn,tabId){
+  ['rpt-achievement','rpt-completion'].forEach(t=>{
+    const el=document.getElementById(t);
+    if(el)el.classList.toggle('hidden',t!==tabId);
+  });
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  if(tabId==='rpt-completion')populateManagerEffectiveness();
+}
+function populateManagerEffectiveness(){
+  const total=state.teamMembers.length;
+  const approved=state.teamMembers.filter(m=>m.goalsApproved>0).length;
+  const q1done=state.teamMembers.filter(m=>m.q1Done).length;
+  const q2done=state.teamMembers.filter(m=>m.q2Done).length;
+  const approvalRate=Math.round((approved/total)*100);
+  const q1rate=Math.round((q1done/total)*100);
+  const q2rate=Math.round((q2done/total)*100);
+  const me=document.getElementById('me-approval-rate');
+  const mq1=document.getElementById('me-q1-rate');
+  const mq2=document.getElementById('me-q2-rate');
+  if(me)me.textContent=approvalRate+'%';
+  if(mq1)mq1.textContent=q1rate+'%';
+  if(mq2)mq2.textContent=q2rate+'%';
+  const tbody=document.getElementById('mgr-effectiveness-rows');
+  if(!tbody)return;
+  // Build per-manager comparison rows (demo has one manager, but shows cross-comparison structure)
+  const managers=[
+    {name:'Bob Kumar',dept:'Sales',team:state.teamMembers,pending:state.pendingGoals.length}
+  ];
+  tbody.innerHTML=managers.map(mgr=>{
+    const t=mgr.team.length;
+    const approved2=mgr.team.filter(m=>m.goalsApproved>0).length;
+    const q1r=Math.round(mgr.team.filter(m=>m.q1Done).length/t*100);
+    const q2r=Math.round(mgr.team.filter(m=>m.q2Done).length/t*100);
+    const avgScore=Math.round(mgr.team.filter(m=>m.avgScore>0).reduce((s,m)=>s+m.avgScore,0)/Math.max(mgr.team.filter(m=>m.avgScore>0).length,1));
+    return `<tr>
+      <td><strong>${mgr.name}</strong><br><span class="grey text-sm">${mgr.dept}</span></td>
+      <td>${t}</td>
+      <td><strong class="${approved2===t?'green':'yellow'}">${approved2}/${t}</strong></td>
+      <td><div class="progress-bar" style="width:80px;display:inline-block;vertical-align:middle;"><div class="progress-fill ${q1r>=80?'success':''}" style="width:${q1r}%"></div></div> <span class="text-sm">${q1r}%</span></td>
+      <td><div class="progress-bar" style="width:80px;display:inline-block;vertical-align:middle;"><div class="progress-fill ${q2r>=80?'success':'danger'}" style="width:${q2r}%"></div></div> <span class="text-sm">${q2r}%</span></td>
+      <td><strong class="yellow">${avgScore}%</strong></td>
+      <td>${mgr.pending>0?`<span class="badge badge-yellow">${mgr.pending} pending</span>`:'<span class="badge badge-green">Clear</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function buildAchievementRows(){
+  // Aggregate ALL team members (not just Alice). Map team members to their goals.
+  const rows=[['Employee','Dept','Goal','Thrust','UoM','Target','Weightage',
+               'Q1 Actual','Q2 Actual','Q3 Actual','Q4 Actual',
+               'Q1 Score%','Q2 Score%','Q3 Score%','Q4 Score%',
+               'Q1 Status','Q2 Status','Q3 Status','Q4 Status']];
+  // Alice's goals (employee goals from state)
+  state.goals.filter(g=>g.owner==='employee').forEach(g=>{
+    rows.push([
+      'Alice Sharma','Sales',g.title,g.thrust,g.uom,g.target,g.weightage+'%',
+      g.achievement.Q1??'',g.achievement.Q2??'',g.achievement.Q3??'',g.achievement.Q4??'',
+      calcScore(g,'Q1')+'%',calcScore(g,'Q2')+'%',calcScore(g,'Q3')+'%',calcScore(g,'Q4')+'%',
+      g.status.Q1,g.status.Q2,g.status.Q3,g.status.Q4
+    ]);
+  });
+  // Other team members with synthetic data
+  state.teamMembers.filter(m=>m.id!=='emp1').forEach(m=>{
+    const syntheticGoals=[
+      {title:'Dept Revenue',thrust:'Revenue Growth',uom:'Numeric (Min)',target:3000000,weightage:30,
+       achievement:{Q1:700000,Q2:1500000,Q3:null,Q4:null},status:{Q1:'On Track',Q2:'On Track',Q3:'Not Started',Q4:'Not Started'}},
+      {title:'Customer Score',thrust:'Customer Success',uom:'Percentage (Min)',target:85,weightage:25,
+       achievement:{Q1:80,Q2:m.avgScore,Q3:null,Q4:null},status:{Q1:'On Track',Q2:m.q2Done?'Completed':'Pending',Q3:'Not Started',Q4:'Not Started'}}
+    ];
+    syntheticGoals.forEach(g=>{
+      rows.push([
+        m.name,m.dept,g.title,g.thrust,g.uom,g.target,g.weightage+'%',
+        g.achievement.Q1??'',g.achievement.Q2??'',g.achievement.Q3??'',g.achievement.Q4??'',
+        Math.round(Math.min((g.achievement.Q1/g.target)*100,150))+'%',
+        g.achievement.Q2!==null?Math.round(Math.min((g.achievement.Q2/g.target)*100,150))+'%':'0%',
+        '0%','0%',
+        g.status.Q1,g.status.Q2,g.status.Q3,g.status.Q4
+      ]);
+    });
+  });
+  return rows;
+}
+function exportCSV(){
+  const rows=buildAchievementRows();
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='achievement_report_all_employees.csv';a.click();
+  toast('CSV exported — all '+state.teamMembers.length+' employees!','success');
+}
+function exportExcel(){
+  if(typeof XLSX==='undefined'){toast('SheetJS not loaded — check network','error');return;}
+  const rows=buildAchievementRows();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  // Style header row bold by setting bold on header range
+  const headerRange=XLSX.utils.decode_range(ws['!ref']);
+  for(let C=headerRange.s.c;C<=headerRange.e.c;C++){
+    const addr=XLSX.utils.encode_cell({r:0,c:C});
+    if(!ws[addr])continue;
+    ws[addr].s={font:{bold:true},fill:{fgColor:{rgb:'F5C518'}},alignment:{horizontal:'center'}};
+  }
+  // Auto column widths
+  ws['!cols']=rows[0].map((_,i)=>({wch:Math.max(...rows.map(r=>String(r[i]||'').length),10)}));
+  // Second sheet: Manager Effectiveness
+  const mgr=[['Manager','Approval Rate','Q1 Check-in Rate','Q2 Check-in Rate','Avg Days to Approve'],
+              ['Bob Kumar','100%',
+               Math.round(state.teamMembers.filter(m=>m.q1Done).length/state.teamMembers.length*100)+'%',
+               Math.round(state.teamMembers.filter(m=>m.q2Done).length/state.teamMembers.length*100)+'%',
+               '2.1 days']];
+  const ws2=XLSX.utils.aoa_to_sheet(mgr);
+  ws2['!cols']=mgr[0].map((_,i)=>({wch:Math.max(...mgr.map(r=>String(r[i]||'').length),14)}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,'Achievement Report',ws);
+  XLSX.utils.book_append_sheet(wb,'Manager Effectiveness',ws2);
+  XLSX.writeFile(wb,'atomquest_achievement_report.xlsx');
+  addAuditLocked(state.user.name+' ('+state.user.role+')','Exported Excel achievement report','All employees','XLSX downloaded');
+  toast('Excel exported — '+state.teamMembers.length+' employees, 2 sheets!','success');
+}
+
+/* ===========================
+   ANALYTICS PAGE (BONUS)
+   =========================== */
+function renderAnalytics(){
+  const el=document.getElementById('page-analytics');
+  el.innerHTML=`
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-value">87%</div><div class="stat-label">Q2 Avg Achievement</div><div class="stat-trend trend-up">↑ +13% vs Q1</div></div>
+    <div class="stat-card"><div class="stat-value">91%</div><div class="stat-label">Top Performer</div><div class="stat-trend">Eva Nair</div></div>
+    <div class="stat-card"><div class="stat-value">5</div><div class="stat-label">Revenue Goals</div><div class="stat-trend trend-up">Most common thrust</div></div>
+    <div class="stat-card"><div class="stat-value">75%</div><div class="stat-label">Team Check-in Rate</div><div class="stat-trend trend-down">↓ 1 pending</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+  <div class="card"><div class="card-header"><div class="card-title">QoQ Trend — Team</div></div>
+    <div id="qoq-team-chart"></div>
+  </div>
+  <div class="card"><div class="card-header"><div class="card-title">Goal Distribution by UoM</div></div>
+    <div id="uom-chart"></div>
+  </div>
+  </div>
+  <div class="card"><div class="card-header"><div class="card-title">Individual Performance — Q2</div></div>
+  <div class="bar-chart" id="emp-perf-chart" style="height:180px;"></div>
+  </div>
+  <div class="card mt-3"><div class="card-header"><div class="card-title">Completion Heatmap — All Teams</div></div>
+  <div id="full-heatmap"></div>
+  </div>`;
+  setTimeout(()=>{
+    renderQoQTeamChart();
+    renderUoMChart();
+    renderEmpPerfChart();
+    renderFullHeatmap();
+  },50);
+}
+
+function renderQoQTeamChart(){
+  const el=document.getElementById('qoq-team-chart');
+  if(!el)return;
+  const data=[{q:'Q1',val:74},{q:'Q2',val:87},{q:'Q3',val:0},{q:'Q4',val:0}];
+  el.innerHTML=`<div class="bar-chart">${data.map(d=>`<div class="bar-wrap">
+    <div class="bar-val">${d.val||'—'}${d.val?'%':''}</div>
+    <div class="bar" style="height:${(d.val/100)*140}px;${!d.val?'background:var(--black4);':''}" title="${d.q}: ${d.val}%"></div>
+    <div class="bar-label">${d.q}</div>
+  </div>`).join('')}</div>
+  <div style="font-size:11px;color:var(--grey);text-align:center;margin-top:4px;">Team Average QoQ Achievement %</div>`;
+}
+function renderUoMChart(){
+  const el=document.getElementById('uom-chart');
+  if(!el)return;
+  const counts={};
+  state.goals.forEach(g=>{counts[g.uom]=(counts[g.uom]||0)+1;});
+  const max=Math.max(...Object.values(counts));
+  el.innerHTML=`<div class="bar-chart">${Object.entries(counts).map(([u,c])=>`<div class="bar-wrap">
+    <div class="bar-val">${c}</div>
+    <div class="bar" style="height:${(c/max)*130}px;"></div>
+    <div class="bar-label" style="font-size:9px;max-width:50px;text-overflow:ellipsis;overflow:hidden;">${u.split(' ')[0]}</div>
+  </div>`).join('')}</div>`;
+}
+function renderEmpPerfChart(){
+  const el=document.getElementById('emp-perf-chart');
+  if(!el)return;
+  const data=state.teamMembers.map(m=>({name:m.name.split(' ')[0],val:m.avgScore}));
+  const max=100;
+  el.innerHTML=data.map(d=>`<div class="bar-wrap">
+    <div class="bar-val">${d.val||'—'}${d.val?'%':''}</div>
+    <div class="bar" style="height:${(d.val/max)*160}px;${!d.val?'background:var(--black4);':''};"></div>
+    <div class="bar-label">${d.name}</div>
+  </div>`).join('');
+}
+function renderFullHeatmap(){
+  const el=document.getElementById('full-heatmap');
+  if(!el)return;
+  renderHeatmap();
+  el.innerHTML=document.getElementById('heatmap-container')?.innerHTML||'<p class="grey">Navigate to Dashboard first to load heatmap.</p>';
+}
+
+/* ===========================
+   ADMIN PAGE
+   =========================== */
+function renderAdmin(){
+  const el=document.getElementById('page-admin');
+  el.innerHTML=`
+  <div class="tabs">
+    <div class="tab active" onclick="switchAdminTab(this,'admin-config')">Cycle Config</div>
+    <div class="tab" onclick="switchAdminTab(this,'admin-users')">Org Hierarchy</div>
+    <div class="tab" onclick="switchAdminTab(this,'admin-unlock')">Goal Unlock</div>
+    <div class="tab" onclick="switchAdminTab(this,'admin-sso')">SSO / Entra ID</div>
+  </div>
+  <div id="admin-config">
+    <div class="card"><div class="card-title mb-3">Cycle Configuration — FY${state.adminConfig.cycleYear}</div>
+    <div class="form-grid">
+      <div class="input-group"><label>Max Goals per Employee</label><input type="number" id="cfg-maxgoals" value="${state.adminConfig.maxGoals}"/></div>
+      <div class="input-group"><label>Min Weightage per Goal (%)</label><input type="number" id="cfg-minwgt" value="${state.adminConfig.minWeightage}"/></div>
+      <div class="input-group col-span-2"><label>Active Cycle</label><select id="cfg-cycle"><option>Q1 Check-in</option><option selected>Q2 Check-in</option><option>Q3 Check-in</option><option>Q4 / Annual</option></select></div>
+    </div>
+    <button class="btn btn-primary mt-3" onclick="saveAdminConfig()">Save Configuration</button>
+    </div>
+    <div class="card">
+      <div class="card-title mb-3">Check-in Schedule</div>
+      <div class="table-wrap"><table class="schedule-table"><thead><tr><th>Period</th><th>Window Opens</th><th>Action</th><th>Status</th><th>Toggle</th></tr></thead><tbody>
+      ${CYCLE_WINDOWS.map((w,i)=>`<tr><td><strong>${w.period}</strong></td><td>${w.opens}</td><td>${w.action}</td>
+      <td>${i<2?'<span class="badge badge-green">Completed</span>':i===2?'<span class="badge badge-yellow">Active</span>':'<span class="badge badge-grey">Upcoming</span>'}</td>
+      <td><label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" ${i===2?'checked':''} style="accent-color:var(--yellow)"/><span style="font-size:12px;color:var(--grey);">Open</span></label></td>
+      </tr>`).join('')}
+      </tbody></table></div>
+    </div>
+  </div>
+  <div id="admin-users" class="hidden">
+    <div class="card"><div class="card-title mb-3">Organisation Hierarchy <span class="badge badge-blue" style="margin-left:8px;">Synced from Azure AD</span></div>
+    <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Dept</th><th>Manager (L1)</th><th>Role</th><th>Azure Group</th></tr></thead><tbody>
+    ${state.teamMembers.map(m=>`<tr><td><strong>${m.name}</strong></td><td>${m.dept}</td><td>Bob Kumar</td><td>Employee</td><td><span class="badge badge-blue">Sales-Team</span></td></tr>`).join('')}
+    <tr><td><strong>Bob Kumar</strong></td><td>Sales</td><td>Carol Singh</td><td>Manager</td><td><span class="badge badge-blue">Sales-Mgr</span></td></tr>
+    <tr><td><strong>Carol Singh</strong></td><td>HR</td><td>—</td><td>Admin/HR</td><td><span class="badge badge-blue">HR-Admin</span></td></tr>
+    </tbody></table></div>
+    <button class="btn btn-ghost btn-sm mt-3" onclick="toast('Syncing from Azure AD...','info');setTimeout(()=>toast('Org hierarchy synced from Entra ID','success'),1500)">🔄 Sync from Entra ID</button>
+    </div>
+  </div>
+  <div id="admin-unlock" class="hidden">
+    <div class="card"><div class="card-title mb-3">Exception Handling — Goal Unlock</div>
+    <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Goal</th><th>Reason</th><th>Action</th></tr></thead><tbody>
+    ${state.goals.filter(g=>g.locked).map(g=>`<tr>
+      <td>Alice Sharma</td><td>${g.title}</td>
+      <td><input placeholder="Enter reason for unlock..." style="background:var(--black3);border:1px solid var(--black5);color:var(--white);padding:6px 8px;border-radius:4px;font-size:12px;width:200px;"/></td>
+      <td><button class="btn btn-danger btn-xs" onclick="unlockGoal(${g.id})">Unlock 24h</button></td>
+    </tr>`).join('')}
+    </tbody></table></div></div>
+  </div>
+  <div id="admin-sso" class="hidden">
+    <div style="background:rgba(100,181,246,.08);border:1px solid rgba(100,181,246,.2);border-radius:6px;padding:12px 16px;font-size:12px;color:var(--grey);margin-bottom:16px;">
+      ℹ️ <strong style="color:var(--white);">Hackathon Demo Note:</strong> SSO and Teams integrations are simulated UI flows. 
+      In production, these connect to real Microsoft Entra ID / Graph API endpoints. 
+      Shared goal achievement sync is implemented via in-memory state propagation; a production system would use a real-time database.
+    </div>
+    <div class="card"><div class="card-title mb-3">Microsoft Entra ID (Azure AD) Integration</div>
+    <div class="form-grid">
+      <div class="input-group"><label>Tenant ID</label><input value="a1b2c3d4-****-****-****" readonly style="opacity:.6"/></div>
+      <div class="input-group"><label>Client ID</label><input value="atomquest-portal-****" readonly style="opacity:.6"/></div>
+      <div class="input-group col-span-2"><label>Authority</label><input value="https://login.microsoftonline.com/your-tenant" readonly style="opacity:.6"/></div>
+      <div class="input-group"><label>SSO Status</label><input value="✅ Connected" readonly style="opacity:.6;color:var(--green)"/></div>
+      <div class="input-group"><label>Auto Role Sync</label><select><option selected>Enabled</option><option>Disabled</option></select></div>
+    </div>
+    <div style="background:var(--yellow-dim2);border:1px solid rgba(245,197,24,.2);border-radius:4px;padding:12px;font-size:12px;margin-top:8px;">
+    <strong class="yellow">Azure AD Groups → Portal Roles:</strong><br/>
+    Sales-Team → Employee &nbsp;|&nbsp; Sales-Mgr → Manager (L1) &nbsp;|&nbsp; HR-Admin → Admin
+    </div>
+    <button class="btn btn-primary mt-3" onclick="toast('SSO configuration saved','success')">Save Configuration</button>
+    </div>
+  </div>`;
+}
+function clearPersistence(){
+  openModal('Reset All Data',
+    '<p style="font-size:14px;color:var(--grey);line-height:1.7;">This will clear all saved goals, check-ins, audit logs, and notifications from browser storage and reload the page with seed data.<br/><br/><strong style="color:var(--red);">This action cannot be undone.</strong></p>',
+    '<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" style="background:var(--red)" onclick="localStorage.removeItem(STORAGE_KEY);location.reload();">Reset Everything</button>'
+  );
+}
+function saveAdminConfig(){
+  state.adminConfig.maxGoals=parseInt(document.getElementById('cfg-maxgoals').value);
+  state.adminConfig.minWeightage=parseInt(document.getElementById('cfg-minwgt').value);
+  addAudit('Carol Singh (Admin)','Updated system configuration','Max goals='+state.adminConfig.maxGoals,'Saved');
+  saveState();
+  toast('Admin configuration saved','success');
+}
+function unlockGoal(id){
+  const g=state.goals.find(x=>x.id===id);
+  if(g){g.locked=false;addAudit('Carol Singh (Admin)','Unlocked goal for 24h',g.title,'Goal editable');}
+  toast('Goal unlocked for 24 hours','success');
+}
+function switchAdminTab(btn,tabId){
+  ['admin-config','admin-users','admin-unlock','admin-sso'].forEach(t=>{
+    const el=document.getElementById(t);if(el)el.classList.toggle('hidden',t!==tabId);
+  });
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ===========================
+   ESCALATION PAGE (BONUS)
+   =========================== */
+function renderEscalation(){
+  const el=document.getElementById('page-escalation');
+  el.innerHTML=`
+  <div class="card">
+    <div class="card-header"><div class="card-title">Escalation Rules</div><button class="btn btn-primary btn-sm" onclick="addEscRule()">+ Add Rule</button></div>
+    ${state.escalationRules.map(r=>`<div class="escalation-rule">
+      <div class="esc-icon">⚠️</div>
+      <div style="flex:1;">
+        <div style="font-weight:600;font-size:13px;">${r.trigger}</div>
+        <div style="font-size:12px;color:var(--grey);margin-top:2px;">Trigger after <strong class="yellow">${r.days} days</strong> &nbsp;·&nbsp; Chain: ${r.chain}</div>
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+        <input type="checkbox" ${r.active?'checked':''} style="accent-color:var(--yellow)" onchange="toggleEscRule(${r.id},this.checked)"/>
+        <span style="font-size:12px;color:var(--grey);">Active</span>
+      </label>
+      <button class="btn btn-ghost btn-xs" onclick="editEscRule(${r.id})">Edit</button>
+    </div>`).join('')}
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Escalation Log</div></div>
+    <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Rule Triggered</th><th>Days Passed</th><th>Status</th><th>Date</th><th>Action</th></tr></thead><tbody>
+    ${state.escalationLog.map(e=>`<tr>
+      <td><strong>${e.employee}</strong></td>
+      <td>${e.rule}</td>
+      <td><span class="red font-bold">${e.daysPassed}</span></td>
+      <td><span class="badge badge-yellow">${e.status}</span></td>
+      <td>${e.time}</td>
+      <td><button class="btn btn-ghost btn-xs" onclick="resolveEsc(${e.id})">Mark Resolved</button></td>
+    </tr>`).join('')}
+    </tbody></table></div>
+  </div>
+  <div class="card">
+    <div class="card-title mb-3">Simulate Escalation</div>
+    <div class="flex gap-3 items-center">
+      <select class="btn btn-ghost btn-sm"><option>Faisal Khan</option><option>Alice Sharma</option></select>
+      <select class="btn btn-ghost btn-sm"><option>Goal not submitted</option><option>Check-in overdue</option></select>
+      <button class="btn btn-primary btn-sm" onclick="simulateEsc()">🔔 Trigger Now</button>
+    </div>
+  </div>`;
+}
+function toggleEscRule(id,val){
+  const r=state.escalationRules.find(x=>x.id===id);
+  if(r){r.active=val;saveState();}
+  toast(`Rule ${val?'activated':'deactivated'}`,'info');
+}
+function addEscRule(){
+  openModal('Add Escalation Rule',`<div class="form-grid">
+    <div class="input-group col-span-2"><label>Trigger Condition</label><input placeholder="e.g. Goal not submitted"/></div>
+    <div class="input-group"><label>Days Before Trigger</label><input type="number" value="5" min="1"/></div>
+    <div class="input-group"><label>Escalation Chain</label><input value="Employee → Manager → HR"/></div>
+  </div>`,`<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEscRule()">Save Rule</button>`);
+}
+function saveEscRule(){
+  state.escalationRules.push({id:Date.now(),trigger:'Custom Rule',days:5,chain:'Employee → Manager → HR',active:true});
+  closeModal();
+  toast('Escalation rule added','success');
+  renderEscalation();
+}
+function editEscRule(id){toast('Edit escalation rule (inline editing in production)','info');}
+function resolveEsc(id){
+  state.escalationLog=state.escalationLog.filter(x=>x.id!==id);
+  addAudit('Carol Singh (Admin)','Resolved escalation','Faisal Khan — Goal submission','Marked resolved');
+  saveState();
+  toast('Escalation resolved','success');
+  renderEscalation();
+}
+function simulateEsc(){
+  state.escalationLog.push({id:Date.now(),employee:'Alice Sharma',rule:'Check-in overdue',daysPassed:3,status:'Notified Employee',time:new Date().toISOString().slice(0,10)});
+  state.notifications.unshift({id:Date.now(),type:'escalation',title:'Escalation Triggered',body:'Check-in overdue for Alice Sharma',time:'Just now',read:false,icon:'⚠️'});
+  toast('Escalation triggered and logged','success');
+  buildNotifications();
+  renderEscalation();
+}
+
+/* ===========================
+   AUDIT TRAIL
+   =========================== */
+function renderAudit(){
+  const el=document.getElementById('page-audit');
+  const postLockCount=state.auditLog.filter(a=>a.postLock).length;
+  el.innerHTML=`
+  <div class="card">
+    <div class="card-header"><div class="card-title">Audit Trail</div>
+    <div class="flex gap-2">
+      <select onchange="filterAuditType(this.value)" style="background:var(--black3);border:1px solid var(--black5);color:var(--white);padding:7px 10px;border-radius:var(--radius);font-size:12px;">
+        <option value="all">All Events</option>
+        <option value="postLock">Post-Lock Changes Only</option>
+      </select>
+      <input id="audit-search" placeholder="Search logs..." style="background:var(--black3);border:1px solid var(--black5);color:var(--white);padding:7px 12px;border-radius:var(--radius);font-size:12px;width:180px;" oninput="filterAudit(this.value)"/>
+      <button class="btn btn-ghost btn-sm" onclick="exportAuditCSV()">⬇ Export</button>
+    </div></div>
+    ${postLockCount>0?`<div style="background:rgba(229,57,53,.08);border:1px solid rgba(229,57,53,.25);border-radius:4px;padding:10px 14px;margin-bottom:12px;font-size:12px;"><span style="color:var(--red);font-weight:600;">⚠ ${postLockCount} post-lock change${postLockCount>1?'s':''} recorded</span> <span style="color:var(--grey);">— changes made after goals were locked are highlighted below.</span></div>`:''}
+    <div id="audit-list">
+    ${state.auditLog.slice().reverse().map(a=>`<div class="audit-entry" data-postlock="${a.postLock||false}" style="${a.postLock?'border-left:2px solid var(--red);padding-left:10px;':''}" >
+      <div class="audit-dot" style="${a.postLock?'background:var(--red);':''}"></div>
+      <div>
+        <div class="audit-line"><strong>${a.user}</strong> — ${a.action} ${a.postLock?'<span style="background:rgba(229,57,53,.15);color:var(--red);font-size:10px;padding:1px 6px;border-radius:4px;margin-left:4px;">POST-LOCK</span>':''}</div>
+        <div class="audit-line">Goal/Target: <strong>${a.goal}</strong></div>
+        <div class="audit-line">After: ${a.after}</div>
+        <div class="audit-time">${a.when}</div>
+      </div>
+    </div>`).join('')}
+    </div>
+  </div>`;
+}
+function filterAuditType(val){
+  const items=document.querySelectorAll('.audit-entry');
+  items.forEach(item=>{
+    if(val==='postLock'){
+      item.style.display=item.dataset.postlock==='true'?'':'none';
+    } else {
+      item.style.display='';
+    }
+  });
+}
+function filterAudit(val){
+  const items=document.querySelectorAll('.audit-entry');
+  items.forEach(item=>{
+    item.style.display=item.textContent.toLowerCase().includes(val.toLowerCase())?'':'none';
+  });
+}
+function exportAuditCSV(){
+  const rows=[['User','Action','Goal','After','When']];
+  state.auditLog.forEach(a=>rows.push([a.user,a.action,a.goal,a.after,a.when]));
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='audit_trail.csv';a.click();
+  toast('Audit log exported','success');
+}
+function addAudit(user,action,goal,after,postLock=false){
+  state.auditLog.push({id:Date.now(),user,action,goal,after,when:new Date().toLocaleString('en-IN'),postLock});
+}
+function addAuditLocked(user,action,goal,after){
+  // Specifically marks changes that happen after a goal lock date
+  const isAfterLock=state.goals.some(g=>g.locked);
+  addAudit(user,action,goal,after,isAfterLock);
+}
+
+/* ===========================
+   MODAL
+   =========================== */
+function openModal(title,body,footer=''){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-body').innerHTML=body;
+  document.getElementById('modal-footer').innerHTML=footer||`<button class="btn btn-ghost" onclick="closeModal()">Close</button>`;
+  document.getElementById('modal').classList.remove('hidden');
+}
+function closeModal(){document.getElementById('modal').classList.add('hidden');}
+
+/* ===========================
+   TOAST
+   =========================== */
+function toast(msg,type='info'){
+  const container=document.getElementById('toast-container');
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;
+  t.textContent=msg;
+  container.appendChild(t);
+  setTimeout(()=>{t.style.animation='fadeOut .3s ease forwards';setTimeout(()=>t.remove(),300);},3000);
+}
+
+/* ===========================
+   ICONS (SVG)
+   =========================== */
+function dashIcon(){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>`;}
+function targetIcon(){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`;}
+function checkIcon(){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>`;}
+function teamIcon(){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>`;}
+function reportIcon(){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`;}
+function chartIcon(){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`;}
+function escIcon(){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;}
+function auditIcon(){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;}
+function settingsIcon(){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>`;}
+
+/* Close notif panel when clicking outside */
+document.addEventListener('click',e=>{
+  const panel=document.getElementById('notif-panel');
+  const btn=document.getElementById('notif-btn');
+  if(state.notifOpen&&!panel.contains(e.target)&&!btn.contains(e.target)){
+    state.notifOpen=false;
+    panel.classList.add('hidden');
+  }
+});
+/* Close modal on overlay click */
+document.getElementById('modal').addEventListener('click',e=>{
+  if(e.target.id==='modal')closeModal();
+});
+</script>
+</body>
+</html>

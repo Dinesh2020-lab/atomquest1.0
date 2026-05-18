@@ -1,0 +1,3 @@
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/atomquest_portal_v2.html" }]
+}
