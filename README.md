@@ -1,8 +1,8 @@
 # AtomQuest — Goal Setting & Tracking Portal
 
-> Built for **AtomQuest Hackathon 1.0** · A fully functional, role-based employee goal management portal shipped as a single HTML file — no backend, no framework, no build step.
+> Built for **AtomQuest Hackathon 1.0** · A fully functional, role-based employee goal management portal.
 
-🔗 **Live Demo:** [atomquestt-pi.vercel.app](atomquestt-pi.vercel.app)
+🔗 **Live Demo:** [Visit AtomQuest](https://atomquestt-pi.vercel.app)
 
 ---
 
